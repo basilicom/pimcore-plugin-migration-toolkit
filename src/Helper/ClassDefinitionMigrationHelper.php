@@ -35,30 +35,28 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
         }
 
         $class = ClassDefinition::getByName($className);
+        $configJson = file_get_contents($pathToJsonConfig);
+
         if (empty($class)) {
-            $class = $this->create($className);
+            $classConfig = json_decode($configJson, true);
+            $class = $this->create($classConfig['id'], $className);
         }
 
-        $configJson = file_get_contents($pathToJsonConfig);
         Service::importClassDefinitionFromJson($class, $configJson, true);
 
         $this->clearCache();
     }
 
     /**
-     * @param string $className
-     *
-     * @return ClassDefinition
-     *
      * @throws InvalidSettingException
      */
-    private function create(string $className): ClassDefinition
+    private function create(string $id, string $className): ClassDefinition
     {
         try {
             $values = [
-                'name'      => $className,
+                'name' => $className,
                 'userOwner' => 0,
-                'id'        => mb_strtolower($className)
+                'id' => $id,
             ];
 
             $class = ClassDefinition::create($values);
@@ -83,7 +81,10 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
         $classDefinition = ClassDefinition::getByName($className);
 
         if (empty($classDefinition)) {
-            $message = sprintf('Class Definition with name "%s" can not be deleted, because it does not exist.', $className);
+            $message = sprintf(
+                'Class Definition with name "%s" can not be deleted, because it does not exist.',
+                $className
+            );
             $this->getOutput()->writeMessage($message);
             return;
         }
@@ -95,6 +96,7 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
     {
         return $this->getJsonFileNameFor($className, self::UP);
     }
+
     public function getJsonDefinitionPathForDownMigration($className): string
     {
         return $this->getJsonFileNameFor($className, self::DOWN);
