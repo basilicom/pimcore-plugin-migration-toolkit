@@ -349,6 +349,19 @@ but each one is run in a separate process, to prevent problems with PHP classes 
 bin/console basilicom:migrations:migrate-in-separate-processes
 ```
 
+In some cases you might run migrations on large datasets. Therefor 120s of timeout per migration won't be enough.
+To adapt the timeout just pass the `--timeout` option. To unset the timeout at all, pass `0`.
+
+```shell 
+bin/console basilicom:migrations:migrate-in-separate-processes --timeout 0
+bin/console basilicom:migrations:migrate-in-separate-processes --timeout 180
+```
+
+```shell 
+bin/console basilicom:migrations:migrate-in-separate-processes -t 0
+bin/console basilicom:migrations:migrate-in-separate-processes -t 180
+```
+
 ### Import Translations
 To import a csv file, like the exported shared translations from pimcore.
 To Pimcore shared translations.
