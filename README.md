@@ -576,6 +576,31 @@ please keep in mind the changed path in case of down migrations:
 project/src/Migrations/data/<YOUR_MIGRATIONS_CLASS_NAME>/sql/down
 ```
 
+### Translation Helper
+
+to add the translations into the pimcore shared/admin translations.
+default domain is 'messages' (shared translations).
+but you can change it to any domain, also 'admin' (admin translations).
+
+```php
+protected array $translations = [
+    'translation.key' => [
+        'en' => 'Test en',
+        'de' => 'Test de',
+    ],
+];
+```
+
+#### Example: Up
+```php
+$this->getTranslationMigrationHelper()->addTranslations($this->translations);
+```
+
+#### Example: Down
+```php
+$this->getTranslationMigrationHelper()->removeTranslationsByKey(array_keys($this->translations));
+```
+
 ## Commands
 
 ### Migrate in separate process
