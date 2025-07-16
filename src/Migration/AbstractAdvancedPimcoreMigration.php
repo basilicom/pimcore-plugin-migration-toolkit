@@ -50,7 +50,7 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
     private ?ClassificationStoreMigrationHelper $classificationStoreMigrationHelper = null;
     private ?TranslationMigrationHelper $translationMigrationHelper = null;
 
-    private string $dataFolder = '';
+    protected string $dataFolder = '';
 
     public function __construct(Connection $connection, LoggerInterface $logger)
     {
