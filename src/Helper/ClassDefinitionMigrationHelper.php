@@ -3,6 +3,7 @@
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
+use Doctrine\DBAL\Exception as DoctrineException;
 use Exception;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Service;
@@ -18,8 +19,9 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
-    public function createOrUpdate(string $className, string $pathToJsonConfig)
+    public function createOrUpdate(string $className, string $pathToJsonConfig): void
     {
         if (!file_exists($pathToJsonConfig)) {
             $message = sprintf(
@@ -61,7 +63,7 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
             $class->save();
 
             return $class;
-        } catch (Exception $exception) {
+        } catch (Exception | DoctrineException $exception) {
             $message = sprintf(
                 'Class Definition "%s" could not be created.',
                 $className

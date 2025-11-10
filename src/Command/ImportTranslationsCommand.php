@@ -23,7 +23,7 @@ class ImportTranslationsCommand extends AbstractCommand
         $this->translationService = new TranslationService;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setDescription('imports shared translations from a csv file that are not present in the system yet')
             ->setHelp('this command imports shared translations from a csv export. it will only import translations that are not in the system yet.')
@@ -49,7 +49,7 @@ class ImportTranslationsCommand extends AbstractCommand
      *     are there any fields that pimcore doesn't know about
      *
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('### Start Import of translation file.');
 
@@ -66,13 +66,14 @@ class ImportTranslationsCommand extends AbstractCommand
             }
         } catch (InvalidTranslationFileFormatException $invalidTranslationFileFormatException) {
             $this->writeError('### Error: ' . $invalidTranslationFileFormatException->getMessage());
-            exit(1);
+            return self::FAILURE;
         } catch (Exception $objException) {
             $this->writeError(sprintf('### Error: unable to import shared translations: %s', $objException->getMessage()));
-            exit(1);
+            return self::FAILURE;
         }
 
         $output->writeln('### Finished Import of translation file.');
-        exit(0);
+
+        return self::SUCCESS;
     }
 }

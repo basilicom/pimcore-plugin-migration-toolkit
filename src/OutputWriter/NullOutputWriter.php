@@ -8,7 +8,7 @@ class NullOutputWriter implements OutputWriterInterface
     {
     }
 
-    public function writeMessage($message)
+    public function writeMessage($message): void
     {
     }
 }

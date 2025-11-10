@@ -2,6 +2,7 @@
 
 namespace Basilicom\PimcorePluginMigrationToolkit\Migration;
 
+use Basilicom\PimcorePluginMigrationToolkit\Exceptions\NotFoundException;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\AssetMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\BundleMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\ClassDefinitionMigrationHelper;
@@ -113,11 +114,18 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
         return $this->userMigrationHelper;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     public function getBundleMigrationHelper(): BundleMigrationHelper
     {
         if ($this->bundleMigrationHelper === null) {
             $bundleManager = Pimcore::getContainer()->get(PimcoreBundleManager::class);
             $assetsInstaller = Pimcore::getContainer()->get(AssetsInstaller::class);
+
+            if (!$bundleManager instanceof PimcoreBundleManager || !$assetsInstaller instanceof AssetsInstaller) {
+                throw new NotFoundException('PimcoreBundleManager or AssetsInstaller not found');
+            }
 
             $this->bundleMigrationHelper = new BundleMigrationHelper($bundleManager, $assetsInstaller);
             $this->bundleMigrationHelper->setOutput($this->getOutputWriter());

@@ -20,7 +20,7 @@ class FieldcollectionMigrationHelper extends AbstractMigrationHelper
      * @throws InvalidSettingException
      * @throws Exception
      */
-    public function createOrUpdate(string $key, string $pathToJsonConfig)
+    public function createOrUpdate(string $key, string $pathToJsonConfig): void
     {
         if (!file_exists($pathToJsonConfig)) {
             $message = sprintf(

@@ -3,6 +3,7 @@
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
+use Exception;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Document;
@@ -24,6 +25,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
      * @param int $parentId
      *
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function create(
         string $name,
@@ -69,6 +71,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
      * @param int $parentId
      *
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function update(
         string $name,
@@ -111,6 +114,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $this->clearCache();
     }
 
+    /**
+     * @throws InvalidSettingException
+     */
     public function addWorkspaceDataObject(
         string $roleName,
         string $path,
@@ -166,6 +172,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function updateWorkspaceDataObject(
         string $roleName,
@@ -191,7 +198,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
-            /** @var WorkspaceDataObject */
             if ($workspaceElement->getCpath() === $path) {
                 $workspaceElement->setList($list);
                 $workspaceElement->setView($view);
@@ -232,6 +238,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function deleteWorkspaceDataObject(string $roleName, string $path): void
     {
@@ -241,7 +248,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
-            /** @var WorkspaceDataObject */
             if ($workspaceElement->getCpath() === $path) {
                 unset($workspaceElements[$key]);
 
@@ -267,6 +273,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $this->clearCache();
     }
 
+    /**
+     * @throws InvalidSettingException
+     */
     public function addWorkspaceDocument(
         string $roleName,
         string $path,
@@ -316,6 +325,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function updateWorkspaceDocument(
         string $roleName,
@@ -338,7 +348,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
-            /** @var WorkspaceDocument */
             if ($workspaceElement->getCpath() === $path) {
                 $workspaceElement->setList($list);
                 $workspaceElement->setView($view);
@@ -376,6 +385,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function deleteWorkspaceDocument(string $roleName, string $path): void
     {
@@ -385,7 +395,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
-            /** @var WorkspaceDocument */
             if ($workspaceElement->getCpath() === $path) {
                 unset($workspaceElements[$key]);
 
@@ -411,6 +420,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $this->clearCache();
     }
 
+    /**
+     * @throws InvalidSettingException
+     */
     public function addWorkspaceAsset(
         string $roleName,
         string $path,
@@ -456,6 +468,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function updateWorkspaceAsset(
         string $roleName,
@@ -476,7 +489,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
-            /** @var WorkspaceAsset */
             if ($workspaceElement->getCpath() === $path) {
                 $workspaceElement->setList($list);
                 $workspaceElement->setView($view);
@@ -512,6 +524,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function deleteWorkspaceAsset(string $roleName, string $path): void
     {
@@ -521,7 +534,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
-            /** @var WorkspaceAsset */
             if ($workspaceElement->getCpath() === $path) {
                 unset($workspaceElements[$key]);
 
@@ -547,6 +559,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $this->clearCache();
     }
 
+    /**
+     * @throws Exception
+     */
     public function delete(string $name): void
     {
         $role = Role::getByName($name);

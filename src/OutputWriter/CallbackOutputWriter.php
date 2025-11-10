@@ -13,7 +13,7 @@ class CallbackOutputWriter implements OutputWriterInterface
         $this->callback = $callback;
     }
 
-    public function writeMessage($message)
+    public function writeMessage($message): void
     {
         ($this->callback)($message);
     }

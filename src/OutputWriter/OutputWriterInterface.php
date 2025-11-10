@@ -4,5 +4,5 @@ namespace Basilicom\PimcorePluginMigrationToolkit\OutputWriter;
 
 interface OutputWriterInterface
 {
-    public function writeMessage($message);
+    public function writeMessage($message): void;
 }

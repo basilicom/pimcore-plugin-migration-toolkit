@@ -4,7 +4,7 @@ namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
 use Exception;
-use Pimcore\Model\Staticroute;
+use Pimcore\Bundle\StaticRoutesBundle\Model\Staticroute;
 
 class StaticRoutesMigrationHelper extends AbstractMigrationHelper
 {
