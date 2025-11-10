@@ -8,12 +8,30 @@ License: GPL v3
 | ^4.0           | ^7.4 | ^6.8    |
 | ^4.0           | ^8.0 | ^10.0   |
 | ^5.0           | ^8.1 | ^11.0   |
+| ^6.0           | ^8.3 | ^13.0   |
 
 ## Why?
 
 In every project we have migrations for the same things. Like Thumbnails, Classes, etc.
 
 This plugin provides you with the migration helpers and further tools.
+
+## Installation
+
+```
+composer require basilicom/pimcore-plugin-migration-toolkit
+```
+
+### Activate Plugin
+
+* Add to config/bundles.php
+``` 
+return [
+    ...
+    PimcorePluginMigrationToolkitBundle::class => ['all' => true],
+];
+
+```
 
 ## Usage Migration Helpers
 

@@ -12,11 +12,11 @@ use Pimcore\Model\WebsiteSetting;
 
 class WebsiteSettingsMigrationHelper extends AbstractMigrationHelper
 {
-    const TYPE_TEXT = 'text';
-    const TYPE_DOCUMENT = 'document';
-    const TYPE_ASSET = 'asset';
-    const TYPE_OBJECT = 'object';
-    const TYPE_BOOL = 'bool';
+    const string TYPE_TEXT = 'text';
+    const string TYPE_DOCUMENT = 'document';
+    const string TYPE_ASSET = 'asset';
+    const string TYPE_OBJECT = 'object';
+    const string TYPE_BOOL = 'bool';
 
     /**
      * @throws InvalidSettingException
@@ -119,6 +119,7 @@ class WebsiteSettingsMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     private function create(string $name, string $type, $data = null, ?string $language = null, ?int $siteId = null): void
     {

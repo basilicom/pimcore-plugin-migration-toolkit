@@ -7,7 +7,7 @@ use Pimcore\Cache\RuntimeCache;
 
 trait ClearCacheTrait
 {
-    protected function clearCache()
+    protected function clearCache(): void
     {
         Cache::clearAll();
         RuntimeCache::clear();

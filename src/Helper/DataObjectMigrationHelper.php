@@ -40,7 +40,7 @@ class DataObjectMigrationHelper extends AbstractMigrationHelper
     {
         try {
             ObjectService::createFolderByPath($path);
-        } catch (Exception $exception) {
+        } catch (Exception) {
             $message = sprintf('The Folder "%s" could not be created.', $path);
 
             throw new InvalidSettingException($message);
@@ -49,6 +49,7 @@ class DataObjectMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function deleteById(int $id): void
     {
@@ -70,6 +71,7 @@ class DataObjectMigrationHelper extends AbstractMigrationHelper
 
     /**
      * @throws InvalidSettingException
+     * @throws Exception
      */
     public function deleteByPath(string $path): void
     {

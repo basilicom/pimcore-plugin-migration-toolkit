@@ -11,17 +11,17 @@ use Pimcore\Model\Element\Service;
 
 class DocumentMigrationHelper extends AbstractMigrationHelper
 {
-    const TYPE_PAGE = 'page';
-    const TYPE_EMAIL = 'email';
-    const VALID_DOCUMENT_TYPES = [self::TYPE_EMAIL, self::TYPE_PAGE];
+    const string TYPE_PAGE = 'page';
+    const string TYPE_EMAIL = 'email';
+    const array VALID_DOCUMENT_TYPES = [self::TYPE_EMAIL, self::TYPE_PAGE];
 
-    const EMAIl_PROP_SUBJECT = 'subject';
-    const EMAIl_PROP_FROM = 'from';
-    const EMAIl_PROP_REPLY_TO = 'replyTo';
-    const EMAIl_PROP_TO = 'to';
-    const EMAIl_PROP_CC = 'cc';
-    const EMAIl_PROP_BCC = 'bcc';
-    const EMAIL_PROPS = [self::EMAIl_PROP_SUBJECT, self::EMAIl_PROP_FROM, self::EMAIl_PROP_REPLY_TO, self::EMAIl_PROP_TO, self::EMAIl_PROP_CC, self::EMAIl_PROP_BCC];
+    const string EMAIl_PROP_SUBJECT = 'subject';
+    const string EMAIl_PROP_FROM = 'from';
+    const string EMAIl_PROP_REPLY_TO = 'replyTo';
+    const string EMAIl_PROP_TO = 'to';
+    const string EMAIl_PROP_CC = 'cc';
+    const string EMAIl_PROP_BCC = 'bcc';
+    const array EMAIL_PROPS = [self::EMAIl_PROP_SUBJECT, self::EMAIl_PROP_FROM, self::EMAIl_PROP_REPLY_TO, self::EMAIl_PROP_TO, self::EMAIl_PROP_CC, self::EMAIl_PROP_BCC];
 
     private bool $shouldPublish = false;
 
@@ -55,6 +55,9 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         return $this->create($parent, $name, $key, $controller, self::TYPE_PAGE);
     }
 
+    /**
+     * @throws InvalidSettingException
+     */
     public function createEmailByPath(
         string $key,
         string $controller,
@@ -65,7 +68,7 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         ?string $to = null,
         ?string $cc = null,
         ?string $bcc = null
-    ) {
+    ): Document\Email {
         $parent = Document::getByPath($parentPath);
 
         $emailDetails = [];
@@ -105,7 +108,7 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         string $controller,
         string $type,
         array $emailDetails = [],
-    ): Document {
+    ): Page | Document\Email {
         if (in_array($type, self::VALID_DOCUMENT_TYPES) === false) {
             $message = sprintf('Unsupported type "%s".', $type);
 
@@ -155,6 +158,8 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
                     $doc->$setter($emailDetails[$emailProp]);
                 }
             }
+        } else {
+            throw new InvalidSettingException('Unsupported type: ' . $type);
         }
 
         $doc->setPublished($this->shouldPublish());
@@ -163,7 +168,10 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         return $doc;
     }
 
-    public function createFolderByPath(string $path)
+    /**
+     * @throws Exception
+     */
+    public function createFolderByPath(string $path): Document\Folder
     {
         return Document\Service::createFolderByPath($path);
     }

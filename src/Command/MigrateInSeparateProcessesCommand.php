@@ -15,14 +15,14 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
 {
     use ClearCacheTrait;
 
-    private const OPTION_BUNDLE = 'bundle';
-    private const OPTION_TIMEOUT = 'timeout';
-    private const LOG_EMPTY_LINE = '                                                            ';
-    private const LOG_SEPARATOR_LINE = '<info>======================================================================================</info>';
+    private const string OPTION_BUNDLE = 'bundle';
+    private const string OPTION_TIMEOUT = 'timeout';
+    private const string LOG_EMPTY_LINE = '                                                            ';
+    private const string LOG_SEPARATOR_LINE = '<info>======================================================================================</info>';
 
     protected static $defaultName = 'basilicom:migrations:migrate-in-separate-processes';
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription(
@@ -62,7 +62,7 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
 
         if (count($idleMigrations) < 1) {
             $output->writeln('<error>No migrations to execute</error>');
-            exit(0);
+            return self::SUCCESS;
         }
 
         $output->writeln(self::LOG_EMPTY_LINE);
@@ -99,7 +99,7 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
             );
 
             if ($process->getExitCode() !== 0) {
-                exit(1);
+                return self::FAILURE;
             }
         }
 
@@ -109,10 +109,10 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
         $output->writeln(self::LOG_SEPARATOR_LINE);
         $output->writeln(self::LOG_EMPTY_LINE);
 
-        return 0;
+        return self::SUCCESS;
     }
 
-    protected function getIdleMigrations(?string $bundle = null)
+    protected function getIdleMigrations(?string $bundle = null): array
     {
         $command = $bundle
             ? sprintf(

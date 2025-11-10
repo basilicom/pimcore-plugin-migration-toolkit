@@ -11,12 +11,12 @@ abstract class AbstractMigrationHelper
 {
     use ClearCacheTrait;
 
-    const UP = 'up';
-    const DOWN = 'down';
+    const string UP = 'up';
+    const string DOWN = 'down';
 
     protected OutputWriterInterface $output;
 
-    public function setOutput(OutputWriterInterface $output)
+    public function setOutput(OutputWriterInterface $output): void
     {
         $this->output = $output;
     }
