@@ -64,6 +64,11 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
         }
     }
 
+    public function getDataFolder(): string
+    {
+        return $this->dataFolder;
+    }
+
     public function getOutputWriter(): CallbackOutputWriter
     {
         return new CallbackOutputWriter(
