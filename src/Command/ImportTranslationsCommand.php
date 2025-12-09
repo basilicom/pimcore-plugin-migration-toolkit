@@ -6,15 +6,15 @@ use Basilicom\PimcorePluginMigrationToolkit\Translation\Exception\InvalidTransla
 use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationService;
 use Exception;
 use Pimcore\Console\AbstractCommand;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand('basilicom:import:translations', 'imports shared translations from a csv file that are not present in the system yet')]
 class ImportTranslationsCommand extends AbstractCommand
 {
-    protected static $defaultName = 'basilicom:import:translations';
-
     private TranslationService $translationService;
 
     public function __construct()
@@ -25,8 +25,7 @@ class ImportTranslationsCommand extends AbstractCommand
 
     protected function configure(): void
     {
-        $this->setDescription('imports shared translations from a csv file that are not present in the system yet')
-            ->setHelp('this command imports shared translations from a csv export. it will only import translations that are not in the system yet.')
+        $this->setHelp('this command imports shared translations from a csv export. it will only import translations that are not in the system yet.')
             ->addArgument('path', InputArgument::REQUIRED, 'the path to the shared translations csv file')
             ->addOption('admin', null, InputOption::VALUE_NONE, 'import admin translations')
             ->addOption('delimiter', null, InputOption::VALUE_OPTIONAL, 'delimiter in the csv file', ';')

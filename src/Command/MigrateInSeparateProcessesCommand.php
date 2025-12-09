@@ -5,12 +5,14 @@ namespace Basilicom\PimcorePluginMigrationToolkit\Command;
 use Basilicom\PimcorePluginMigrationToolkit\Trait\ClearCacheTrait;
 use Pimcore;
 use Pimcore\Console\AbstractCommand;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
+#[AsCommand('basilicom:migrations:migrate-in-separate-processes', 'Executes the same migrations as the doctrine:migrations:execute command, but each one is run in a separate process, to prevent problems with PHP classes that changed during the runtime.')]
 class MigrateInSeparateProcessesCommand extends AbstractCommand
 {
     use ClearCacheTrait;
@@ -20,15 +22,9 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
     private const string LOG_EMPTY_LINE = '                                                            ';
     private const string LOG_SEPARATOR_LINE = '<info>======================================================================================</info>';
 
-    protected static $defaultName = 'basilicom:migrations:migrate-in-separate-processes';
-
     protected function configure(): void
     {
         $this
-            ->setDescription(
-                'Executes the same migrations as the doctrine:migrations:execute command, ' .
-                'but each one is run in a separate process, to prevent problems with PHP classes that changed during the runtime.'
-            )
             ->addOption(
                 self::OPTION_BUNDLE,
                 'b',
