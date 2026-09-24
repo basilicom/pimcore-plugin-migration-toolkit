@@ -1,21 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
 use Exception;
-use Pimcore;
 use Pimcore\Model\DataObject\ClassDefinition\CustomLayout;
 use Pimcore\Model\DataObject\ClassDefinition\Service;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class CustomLayoutMigrationHelper extends AbstractMigrationHelper
 {
     protected string $dataFolder;
-    protected SerializerInterface $serializer;
+    protected DecoderInterface $serializer;
 
-    public function __construct(string $dataFolder, SerializerInterface $serializer)
+    public function __construct(string $dataFolder, DecoderInterface $serializer)
     {
         $this->dataFolder = $dataFolder;
         $this->serializer = $serializer;
@@ -44,7 +44,7 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
         }
 
         try {
-            $configJson = $this->decodeJson((string)file_get_contents($pathToJsonConfig));
+            $configJson       = $this->decodeJson((string)file_get_contents($pathToJsonConfig));
             $layoutDefinition = Service::generateLayoutTreeFromArray($configJson['layoutDefinitions'], true);
             $customLayout->setLayoutDefinitions($layoutDefinition);
             $customLayout->setDescription($configJson['description']);
@@ -63,13 +63,9 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
                 $exception
             );
         }
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     private function create(string $layoutName, string $classId): CustomLayout
     {
         try {
@@ -95,9 +91,7 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
         }
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function delete(string $layoutName, string $classId): void
     {
         $customLayout = CustomLayout::getByNameAndClassId($layoutName, $classId);
@@ -116,6 +110,7 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
         $customLayout->delete();
     }
 
+    /** @return array<string, mixed> */
     protected function decodeJson(string $json): array
     {
         return $this->serializer->decode($json, 'json', ['json_decode_associative' => true]);

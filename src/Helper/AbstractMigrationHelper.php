@@ -1,20 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\NullOutputWriter;
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\OutputWriterInterface;
-use Basilicom\PimcorePluginMigrationToolkit\Trait\ClearCacheTrait;
 use Pimcore\Tool;
 
 abstract class AbstractMigrationHelper
 {
-    use ClearCacheTrait;
+    public const string UP   = 'up';
+    public const string DOWN = 'down';
 
-    const string UP = 'up';
-    const string DOWN = 'down';
-
-    protected OutputWriterInterface $output;
+    protected ?OutputWriterInterface $output = null;
 
     public function setOutput(OutputWriterInterface $output): void
     {
@@ -23,11 +22,7 @@ abstract class AbstractMigrationHelper
 
     protected function getOutput(): OutputWriterInterface
     {
-        if (!$this->output instanceof OutputWriterInterface) {
-            return new NullOutputWriter();
-        }
-
-        return $this->output;
+        return $this->output ?? new NullOutputWriter();
     }
 
     protected function isValidLanguage(string $language): bool

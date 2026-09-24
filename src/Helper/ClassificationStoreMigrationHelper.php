@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\NotFoundException;
@@ -9,9 +11,7 @@ use Pimcore\Model\DataObject\Classificationstore;
 
 class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
 {
-    /**
-     * @throws NotFoundException
-     */
+    /** @throws NotFoundException */
     public function getStoreByName(string $name): Classificationstore\StoreConfig
     {
         $storeConfig = Classificationstore\StoreConfig::getByName($name);
@@ -53,9 +53,7 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         $storeConfig->delete();
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function createOrUpdateGroup(
         string $name,
         string $description,
@@ -70,28 +68,20 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         $groupConfig->setDescription($description);
         $groupConfig->save();
 
-        $this->clearCache();
-
         return $groupConfig;
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function renameGroup(string $oldName, string $newName, int $storeId): ?Classificationstore\GroupConfig
     {
         $groupConfig = Classificationstore\GroupConfig::getByName($oldName, $storeId);
         $groupConfig->setName($newName);
         $groupConfig->save();
 
-        $this->clearCache();
-
         return $groupConfig;
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function deleteGroup(string $name, int $storeId): void
     {
         $groupConfig = Classificationstore\GroupConfig::getByName($name, $storeId);
@@ -105,9 +95,7 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         $groupConfig->delete();
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function createOrUpdateKey(
         string $name,
         string $title,
@@ -130,16 +118,14 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         $keyConfig->setStoreId($storeId);
         $keyConfig->save();
 
-        $groupConfig = Classificationstore\GroupConfig::getByName($groupName, $storeId);
+        $groupConfig      = Classificationstore\GroupConfig::getByName($groupName, $storeId);
         $keyGroupRelation = new Classificationstore\KeyGroupRelation();
         $keyGroupRelation->setKeyId($keyConfig->getId());
         $keyGroupRelation->setGroupId($groupConfig->getId());
         $keyGroupRelation->save();
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function deleteKey(string $name, int $storeId): void
     {
         $keyConfig = Classificationstore\KeyConfig::getByName($name, $storeId);

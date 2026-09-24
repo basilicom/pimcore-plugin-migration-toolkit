@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -7,9 +9,7 @@ use Pimcore\Model\DataObject\QuantityValue\Unit as QuantityValueUnit;
 
 class QuantityValueUnitMigrationHelper extends AbstractMigrationHelper
 {
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createOrUpdate(
         string $id,
         string $abbreviation,
