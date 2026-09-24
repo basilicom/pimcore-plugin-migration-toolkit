@@ -8,6 +8,9 @@ services:
         resource: '../../Command'
         public: true
 
+    Basilicom\PimcorePluginMigrationToolkit\Migration\MigrationHelperFactory: ~
+    Basilicom\PimcorePluginMigrationToolkit\Migration\HelperAwareMigrationFactory: ~
+
     Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter: ~
     Basilicom\PimcorePluginMigrationToolkit\Translation\Reader\CsvTranslationReader: ~
     Basilicom\PimcorePluginMigrationToolkit\Translation\Reader\YamlCatalogueReader: ~

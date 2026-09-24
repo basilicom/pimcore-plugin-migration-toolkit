@@ -7,3 +7,11 @@ services:
     public: true
     arguments:
       $bundle: "@=service('kernel').getBundle('TestInstallableBundle')"
+
+  # public handles for the functional tests
+  test.doctrine.migrations.dependency_factory:
+    alias: doctrine.migrations.dependency_factory
+    public: true
+  test.migration_helper_factory:
+    alias: Basilicom\PimcorePluginMigrationToolkit\Migration\MigrationHelperFactory
+    public: true

@@ -7,13 +7,27 @@ namespace Basilicom\PimcorePluginMigrationToolkit\Tests\Functional\Migration;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\BundleMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Tests\Fixtures\Migration\FixtureMigration;
 use Basilicom\PimcorePluginMigrationToolkit\Tests\Functional\AbstractFunctionalTestCase;
+use Doctrine\Migrations\DependencyFactory;
+use Pimcore;
 use Pimcore\Db;
 use Pimcore\Model\Translation;
 use Psr\Log\NullLogger;
 
 class AbstractAdvancedPimcoreMigrationTest extends AbstractFunctionalTestCase
 {
-    public function testBundleHelperIsWiredFromTheContainer(): void
+    public function testDoctrineBuiltMigrationsGetTheContainerHelperFactory(): void
+    {
+        $dependencyFactory = Pimcore::getContainer()?->get('test.doctrine.migrations.dependency_factory');
+        self::assertInstanceOf(DependencyFactory::class, $dependencyFactory);
+
+        $migration = $dependencyFactory->getMigrationFactory()->createVersion(FixtureMigration::class);
+
+        self::assertInstanceOf(FixtureMigration::class, $migration);
+        self::assertSame(Pimcore::getContainer()?->get('test.migration_helper_factory'), $migration->helperFactory());
+        self::assertInstanceOf(BundleMigrationHelper::class, $migration->getBundleMigrationHelper());
+    }
+
+    public function testHandBuiltMigrationsStillGetTheBundleHelperFromTheBootedContainer(): void
     {
         $migration = new FixtureMigration(Db::get(), new NullLogger());
 

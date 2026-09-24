@@ -15,8 +15,11 @@
   `Overwrite` mode. Unknown locales are skipped and reported, never stored.
 - **Bundle config**: `pimcore_plugin_migration_toolkit.translations.{catalogue_dir,domains}` in
   `DependencyInjection/Configuration`, exposed as container parameters and injected via `#[Autowire(param:)]`.
-- **Helpers are not services yet**: `AbstractAdvancedPimcoreMigration` instantiates them with `new` and lazily.
-  New helper dependencies have to be constructed there as well.
+- **Helper wiring**: `Migration\MigrationHelperFactory` (container service) creates the helpers with their
+  collaborators; `Migration\HelperAwareMigrationFactory` decorates `doctrine.migrations.migrations_factory` and
+  injects it into every `AbstractAdvancedPimcoreMigration`. The base class memoizes one helper per class and
+  migration and sets the output writer. Without injection (hand-built migration, unit test) it falls back to
+  `MigrationHelperFactory::standalone()`. A helper with a new dependency gets it through the factory constructor.
 - **Fixture migration**: `tests/App/Migrations/Version20260101000000` (path in
   `tests/App/config/packages/doctrine_migrations.yaml`) exists only for the migrate command test, which reverts
   and re-executes it in child processes.

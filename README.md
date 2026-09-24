@@ -49,7 +49,10 @@ return [
 
 ## Usage Migration Helpers
 
-For all migrations extend them from the class ```AbstractAdvancedPimcoreMigration```.
+For all migrations extend them from the class ```AbstractAdvancedPimcoreMigration``` and call
+`$this->get<Name>MigrationHelper()`. The helpers come from the `MigrationHelperFactory` service, which the
+bundle injects into every migration Doctrine instantiates (it decorates Doctrine's migration factory). A
+project can decorate `MigrationHelperFactory` to replace a helper for all its migrations.
 
 ### Migration Data
 

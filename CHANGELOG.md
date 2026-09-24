@@ -29,6 +29,10 @@
   migration still saw it. The helpers drop the runtime cache after a deletion.
 
 ### Added
+* `Migration\MigrationHelperFactory` builds the helpers with their collaborators from the container and
+  `Migration\HelperAwareMigrationFactory` (decorating Doctrine's migration factory) hands it to every
+  `AbstractAdvancedPimcoreMigration`. Migrations keep calling `$this->get…MigrationHelper()`; a migration
+  constructed by hand falls back to a standalone factory. Projects can decorate the factory to swap helpers.
 * Test rig (`make setup && make test`): Docker Compose with MariaDB, a minimal Pimcore project in
   `tests/App`, PHPUnit 11 unit and functional suites covering every public helper method and command,
   PHPStan level 6 and PHP-CS-Fixer configuration, GitHub Actions workflow.

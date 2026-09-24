@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Basilicom\PimcorePluginMigrationToolkit\Tests\Unit\Migration;
 
 use Basilicom\PimcorePluginMigrationToolkit\Helper\AssetMigrationHelper;
+use Basilicom\PimcorePluginMigrationToolkit\Helper\BundleMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\ClassDefinitionMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\ClassificationStoreMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\CustomLayoutMigrationHelper;
@@ -19,6 +20,7 @@ use Basilicom\PimcorePluginMigrationToolkit\Helper\TranslationMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\UserMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\UserRolesMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\WebsiteSettingsMigrationHelper;
+use Basilicom\PimcorePluginMigrationToolkit\Migration\MigrationHelperFactory;
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\CallbackOutputWriter;
 use Basilicom\PimcorePluginMigrationToolkit\Tests\Fixtures\Migration\FixtureMigration;
 use Doctrine\DBAL\Connection;
@@ -54,6 +56,7 @@ class AbstractAdvancedPimcoreMigrationTest extends TestCase
             'getStaticRoutesMigrationHelper'        => StaticRoutesMigrationHelper::class,
             'getUserRolesMigrationHelper'           => UserRolesMigrationHelper::class,
             'getUserMigrationHelper'                => UserMigrationHelper::class,
+            'getBundleMigrationHelper'              => BundleMigrationHelper::class,
             'getClassDefinitionMigrationHelper'     => ClassDefinitionMigrationHelper::class,
             'getObjectBrickMigrationHelper'         => ObjectbrickMigrationHelper::class,
             'getFieldCollectionMigrationHelper'     => FieldcollectionMigrationHelper::class,
@@ -73,6 +76,12 @@ class AbstractAdvancedPimcoreMigrationTest extends TestCase
             self::assertInstanceOf($class, $helper, $getter);
             self::assertSame($helper, $this->migration->{$getter}(), $getter . ' is cached');
         }
+    }
+
+    public function testFallsBackToAStandaloneHelperFactory(): void
+    {
+        self::assertInstanceOf(MigrationHelperFactory::class, $this->migration->helperFactory());
+        self::assertSame($this->migration->helperFactory(), $this->migration->helperFactory());
     }
 
     public function testDataFolderFeedsTheFileBasedHelpers(): void
