@@ -51,6 +51,8 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         }
 
         $storeConfig->delete();
+
+        $this->forgetRuntimeCache();
     }
 
     /** @throws Exception */
@@ -93,6 +95,8 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         }
 
         $groupConfig->delete();
+
+        $this->forgetRuntimeCache();
     }
 
     /** @throws Exception */
@@ -137,5 +141,7 @@ class ClassificationStoreMigrationHelper extends AbstractMigrationHelper
         }
 
         $keyConfig->delete();
+
+        $this->forgetRuntimeCache();
     }
 }

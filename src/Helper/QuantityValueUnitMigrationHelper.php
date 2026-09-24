@@ -64,5 +64,7 @@ class QuantityValueUnitMigrationHelper extends AbstractMigrationHelper
         }
 
         $unit->delete();
+
+        $this->forgetRuntimeCache();
     }
 }

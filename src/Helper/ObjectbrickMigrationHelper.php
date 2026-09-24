@@ -75,6 +75,8 @@ class ObjectbrickMigrationHelper extends AbstractMigrationHelper
         }
 
         $objectbricks->delete();
+
+        $this->forgetRuntimeCache();
     }
 
     public function getJsonDefinitionPathForUpMigration(string $className): string

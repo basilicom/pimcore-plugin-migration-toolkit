@@ -8,9 +8,6 @@ services:
         resource: '../../Command'
         public: true
 
-    Basilicom\PimcorePluginMigrationToolkit\Translation\:
-        resource: '../../Translation'
-        exclude:
-            - '../../Translation/Exception'
-            - '../../Translation/ImportResult.php'
-            - '../../Translation/Overwrite.php'
+    Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter: ~
+    Basilicom\PimcorePluginMigrationToolkit\Translation\Reader\CsvTranslationReader: ~
+    Basilicom\PimcorePluginMigrationToolkit\Translation\Reader\YamlCatalogueReader: ~

@@ -95,11 +95,12 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
     }
 
     /**
+     * @param array<string, string> $emailDetails
+     *
      * @throws InvalidSettingException
      * @throws Exception
      *
      * @see \Pimcore\Bundle\AdminBundle\Controller\Admin\Document\DocumentController::addAction()
-     *
      */
     private function create(
         ?Document $parent,

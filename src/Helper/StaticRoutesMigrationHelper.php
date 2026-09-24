@@ -65,5 +65,7 @@ class StaticRoutesMigrationHelper extends AbstractMigrationHelper
         }
 
         $route->delete();
+
+        $this->forgetRuntimeCache();
     }
 }

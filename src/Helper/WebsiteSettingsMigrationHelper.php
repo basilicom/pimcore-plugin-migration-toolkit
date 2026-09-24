@@ -184,5 +184,7 @@ class WebsiteSettingsMigrationHelper extends AbstractMigrationHelper
         }
 
         $websiteSetting->delete();
+
+        $this->forgetRuntimeCache();
     }
 }

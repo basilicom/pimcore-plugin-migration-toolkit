@@ -79,6 +79,8 @@ class FieldcollectionMigrationHelper extends AbstractMigrationHelper
         }
 
         $fieldcollection->delete();
+
+        $this->forgetRuntimeCache();
     }
 
     public function getJsonDefinitionPathForUpMigration(string $className): string

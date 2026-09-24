@@ -105,6 +105,7 @@ class MigrateInSeparateProcessesCommand extends AbstractCommand
         return self::SUCCESS;
     }
 
+    /** @return array<string> */
     protected function getIdleMigrations(?string $bundle = null): array
     {
         $command = $bundle

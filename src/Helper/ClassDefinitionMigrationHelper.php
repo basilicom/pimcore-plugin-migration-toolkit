@@ -91,6 +91,8 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
         }
 
         $classDefinition->delete();
+
+        $this->forgetRuntimeCache();
     }
 
     public function getJsonDefinitionPathForUpMigration(string $className): string

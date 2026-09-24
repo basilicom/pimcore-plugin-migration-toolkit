@@ -33,5 +33,7 @@ class TranslationMigrationHelper extends AbstractMigrationHelper
         foreach ($keys as $key) {
             Translation::getByKey($key, $domain)?->delete();
         }
+
+        $this->forgetRuntimeCache();
     }
 }

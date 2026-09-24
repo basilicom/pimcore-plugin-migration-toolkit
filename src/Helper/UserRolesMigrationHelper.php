@@ -17,7 +17,12 @@ use Pimcore\Model\User\Workspace\Document as WorkspaceDocument;
 class UserRolesMigrationHelper extends AbstractMigrationHelper
 {
     /**
-     * @param array $permissions see database table users_permission_definitions
+     * @param array<string> $permissions see database table users_permission_definitions
+     * @param array<string> $docTypes
+     * @param array<string> $classes
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     * @param array<string> $perspectives
      *
      * @throws InvalidSettingException
      * @throws Exception
@@ -54,7 +59,12 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     }
 
     /**
-     * @param array $permissions see database table users_permission_definitions
+     * @param array<string> $permissions see database table users_permission_definitions
+     * @param array<string> $docTypes
+     * @param array<string> $classes
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     * @param array<string> $perspectives
      *
      * @throws InvalidSettingException
      * @throws Exception
@@ -540,6 +550,10 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $role->delete();
     }
 
+    /**
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     */
     private function addSharedTranslationSettings(
         Role $role,
         array $viewWebsiteTranslations,

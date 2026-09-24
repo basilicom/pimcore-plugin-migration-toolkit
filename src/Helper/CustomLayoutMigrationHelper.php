@@ -38,10 +38,7 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
             throw new InvalidSettingException($message);
         }
 
-        $customLayout = CustomLayout::getByNameAndClassId($layoutName, $classId);
-        if (empty($customLayout)) {
-            $customLayout = $this->create($layoutName, $classId);
-        }
+        $customLayout = $this->find($layoutName, $classId) ?? $this->create($layoutName, $classId);
 
         try {
             $configJson       = $this->decodeJson((string)file_get_contents($pathToJsonConfig));
@@ -50,6 +47,7 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
             $customLayout->setDescription($configJson['description']);
             $customLayout->setDefault($configJson['default']);
             $customLayout->save();
+            $this->forgetRuntimeCache();
         } catch (Exception $exception) {
             $message = sprintf(
                 'Custom Layout "%s" for classId "%s" could not be saved.',
@@ -94,9 +92,9 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
     /** @throws Exception */
     public function delete(string $layoutName, string $classId): void
     {
-        $customLayout = CustomLayout::getByNameAndClassId($layoutName, $classId);
+        $customLayout = $this->find($layoutName, $classId);
 
-        if (empty($customLayout)) {
+        if ($customLayout === null) {
             $message = sprintf(
                 'Custom Layout with name "%s" for classId "%s" can not be deleted, because it does not exist.',
                 $layoutName,
@@ -108,6 +106,22 @@ class CustomLayoutMigrationHelper extends AbstractMigrationHelper
         }
 
         $customLayout->delete();
+
+        $this->forgetRuntimeCache();
+    }
+
+    /**
+     * getByNameAndClassId() copies the values of a listing item into a fresh model whose DAO never
+     * learned where the data lives, so save() and delete() on it silently do nothing. Reloading by
+     * id goes through the DAO and records the data source.
+     */
+    private function find(string $layoutName, string $classId): ?CustomLayout
+    {
+        $this->forgetRuntimeCache();
+
+        $customLayout = CustomLayout::getByNameAndClassId($layoutName, $classId);
+
+        return $customLayout === null ? null : CustomLayout::getById((string) $customLayout->getId());
     }
 
     /** @return array<string, mixed> */
