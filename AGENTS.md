@@ -57,3 +57,5 @@
 - `UserRolesMigrationHelper` workspace methods take 13 positional booleans; a value object is planned.
 - Class/Objectbrick/Fieldcollection/CustomLayout helpers import JSON definitions; projects on Pimcore 11+
   usually commit `definition_*.php` files instead.
+- **Dist**: `.gitattributes` marks tests, tooling, Docker rig and agent docs as `export-ignore`, so the Composer
+  package (GitHub zipball) ships only `src/`, `composer.json`, `README.md`, `CHANGELOG.md` and the license.
