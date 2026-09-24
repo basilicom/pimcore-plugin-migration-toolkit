@@ -3,6 +3,10 @@
 ## 7.0.0 (2026-09-30)
 
 ### Changed
+* `basilicom:migrations:migrate-in-separate-processes` reads the pending migrations from Doctrine's status
+  calculator instead of parsing `doctrine:migrations:list`, starts the child processes with the PHP binary
+  of the current run, and reports "nothing to do" as info instead of an error. New options `--dry-run`
+  and `--down=prev|<version>` (revert one process per migration, newest first).
 * Helpers no longer flush the whole Pimcore cache: `ClearCacheTrait` and every `Cache::clearAll()` call are
   removed, Pimcore's own `save()` methods invalidate what they touch. `basilicom:migrations:migrate-in-separate-processes`
   no longer clears the cache before running.

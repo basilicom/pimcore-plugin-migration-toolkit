@@ -17,6 +17,9 @@
   `DependencyInjection/Configuration`, exposed as container parameters and injected via `#[Autowire(param:)]`.
 - **Helpers are not services yet**: `AbstractAdvancedPimcoreMigration` instantiates them with `new` and lazily.
   New helper dependencies have to be constructed there as well.
+- **Fixture migration**: `tests/App/Migrations/Version20260101000000` (path in
+  `tests/App/config/packages/doctrine_migrations.yaml`) exists only for the migrate command test, which reverts
+  and re-executes it in child processes.
 - **Test rig**: `docker-compose.yml` (PHP 8.4 + throwaway MariaDB), the bundle is the Composer root package,
   `tests/App` is a minimal Pimcore project (`Kernel.php`, `config/`, `bin/console`) installed by
   `docker/install.php` through the Installer *service* — the CLI installer wants a signed product key. The
@@ -46,14 +49,12 @@
 
 | Command | Purpose |
 |---|---|
-| `basilicom:migrations:migrate-in-separate-processes` | Runs each pending Doctrine migration in its own PHP process (`--bundle`, `--timeout`) |
+| `basilicom:migrations:migrate-in-separate-processes` | Runs each pending Doctrine migration in its own PHP process; `--dry-run`, `--down=prev\|<version>`, `--bundle`, `--timeout`. Pending list from Doctrine's `DependencyFactory` (`doctrine.migrations.dependency_factory`) |
 | `basilicom:translations:import <file>` | Imports a Pimcore translation CSV export into one domain (`--domain`, `--overwrite`, `--delimiter`) |
 | `basilicom:translations:sync` | Adds Symfony YAML catalogue labels to Pimcore translations (`--domain`, `--catalogue-dir`, `--overwrite`) |
 
 ## Open Items (see README "Ideas" and the 7.0 review)
 
-- `MigrateInSeparateProcessesCommand` still lists pending migrations by parsing `doctrine:migrations:list`
-  output; should use Doctrine's `DependencyFactory`.
 - `UserRolesMigrationHelper` workspace methods take 13 positional booleans; a value object is planned.
 - Class/Objectbrick/Fieldcollection/CustomLayout helpers import JSON definitions; projects on Pimcore 11+
   usually commit `definition_*.php` files instead.
