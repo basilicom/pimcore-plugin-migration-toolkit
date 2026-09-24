@@ -25,6 +25,9 @@
   migration still saw it. The helpers drop the runtime cache after a deletion.
 
 ### Added
+* Test rig (`make setup && make test`): Docker Compose with MariaDB, a minimal Pimcore project in
+  `tests/App`, PHPUnit 11 unit and functional suites covering every public helper method and command,
+  PHPStan level 6 and PHP-CS-Fixer configuration, GitHub Actions workflow.
 * `basilicom:translations:sync` adds the labels of the Symfony YAML catalogues (`<domain>.<locale>.yaml`) to
   Pimcore's editable translations without overwriting existing ones. Catalogue directory and domains are
   configurable under `pimcore_plugin_migration_toolkit.translations` (default: `messages`; the `admin` domain

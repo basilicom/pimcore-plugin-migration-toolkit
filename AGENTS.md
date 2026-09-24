@@ -17,9 +17,16 @@
   `DependencyInjection/Configuration`, exposed as container parameters and injected via `#[Autowire(param:)]`.
 - **Helpers are not services yet**: `AbstractAdvancedPimcoreMigration` instantiates them with `new` and lazily.
   New helper dependencies have to be constructed there as well.
-- **No tests, no lint config in this repo yet**. Until there is, run the consuming project's tools against
-  `src/` (PHPStan level 6, PHP-CS-Fixer PSR-12 with the project's ruleset) and its functional test for
-  `basilicom:translations:sync`.
+- **Test rig**: `docker-compose.yml` (PHP 8.4 + throwaway MariaDB), the bundle is the Composer root package,
+  `tests/App` is a minimal Pimcore project (`Kernel.php`, `config/`, `bin/console`) installed by
+  `docker/install.php` through the Installer *service* — the CLI installer wants a signed product key. The
+  committed `tests/App/var/config/needs-install.lock` plus an empty encryption secret make the kernel skip
+  the registration check. `tests/bootstrap.php` boots that kernel once for both suites.
+- **Quality gates**: `make lint` (PHP-CS-Fixer with the Basilicom ruleset, PHPStan level 6 over `src`, `tests`,
+  `docker`) and `make test` (PHPUnit 11: `tests/Unit`, `tests/Functional`). CI runs both (`.github/workflows/ci.yml`).
+- **Pimcore quirks the helpers work around**: config-like models keep deleted entries in the runtime cache
+  (`AbstractMigrationHelper::forgetRuntimeCache()` after deletions); `CustomLayout::getByNameAndClassId()`
+  yields a model whose DAO has no data source, so save/delete on it do nothing — reload by id first.
 
 ## Conventions
 
@@ -27,6 +34,11 @@
 - Command names are `basilicom:<area>:<verb>` and exposed as a `NAME` constant.
 - Exceptions extend `Exceptions\MigrationToolkitException`.
 - Constants instead of magic strings; no comments narrating changes.
+- Every public helper method and every command has at least one test. Functional tests extend
+  `Tests\Functional\AbstractFunctionalTestCase`, use `uniqueName()` for element names and register
+  cleanup with `onTearDown()`; read persisted state back through Pimcore's model API.
+- Saved configurations in the test app write to the settings store (`tests/App/config/packages/pimcore.yaml`),
+  otherwise a symfony-config write is only visible after a container rebuild.
 - Document behaviour changes in `README.md` (usage) and `CHANGELOG.md` (per version).
 - Keep this file current when structure, commands or conventions change.
 

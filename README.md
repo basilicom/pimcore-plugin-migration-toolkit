@@ -644,6 +644,28 @@ pimcore_plugin_migration_toolkit:
 The CSV import, the sync and the `TranslationMigrationHelper` all write through
 `Translation\TranslationImporter`, so they behave the same.
 
+## Development
+
+The bundle ships its own test rig: `docker-compose.yml` starts a PHP 8.4 container and a throwaway
+MariaDB, the bundle itself is the Composer root package (so `vendor/` contains Pimcore) and
+`tests/App` is a minimal Pimcore project that the tests boot against.
+
+```shell
+make setup            # start the containers, composer install, install Pimcore into tests/App
+make test             # unit + functional tests (make test-unit / make test-functional)
+make lint             # PHP-CS-Fixer dry run + PHPStan level 6 (make lint-php-fix applies the fixes)
+make destroy          # remove containers and volumes
+```
+
+`docker/install.php` drives Pimcore's installer service directly: the CLI installer insists on a
+signed product key, which a test rig does not have. With an empty encryption secret and the committed
+`tests/App/var/config/needs-install.lock` marker the kernel skips the registration check.
+
+Functional tests live in `tests/Functional`, extend `AbstractFunctionalTestCase`, create uniquely
+named elements and register their removal with `onTearDown()`. Every public helper method has at
+least one test. Saved configurations (static routes, custom layouts, …) use the settings store as
+write target in `tests/App/config/packages/pimcore.yaml`, so they are readable in the same process.
+
 ## Ideas
 
 * command: ```basilicom:migrations:generate <which type of migration>```

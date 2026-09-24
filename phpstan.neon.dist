@@ -1,0 +1,15 @@
+parameters:
+  level: 6
+  paths:
+    - src
+    - tests
+    - docker
+  excludePaths:
+    - tests/App/var
+    - tests/App/vendor
+  tmpDir: .phpstan.cache
+  ignoreErrors:
+    # Tests read elements back with `?->` so a missing element fails the assertion instead of
+    # crashing; PHPStan narrows the variable to non-null after the first passing assertion.
+    - identifier: nullsafe.neverNull
+      path: tests/*

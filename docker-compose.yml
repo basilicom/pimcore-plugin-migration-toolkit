@@ -1,0 +1,36 @@
+# Throwaway test rig: the bundle is the Composer root package (so `vendor/` holds
+# Pimcore itself) and tests/App is a minimal Pimcore project that PIMCORE_PROJECT_ROOT
+# points at. `make setup` installs Pimcore into the MariaDB service.
+services:
+  php:
+    image: basilicom/php-fpm-pimcore:12-8.4-2
+    command: sleep infinity
+    working_dir: /php
+    environment:
+      APP_ENV: test
+      APP_SECRET: toolkit-test-rig-secret
+      COMPOSER_HOME: /tmp/composer
+      COMPOSER_MEMORY_LIMIT: -1
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: pimcore_test
+    volumes:
+      - ./:/php
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: pimcore_test
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
