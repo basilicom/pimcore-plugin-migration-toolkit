@@ -1,5 +1,5 @@
 # Pimcore Plugin Migration Toolkit
-License: MIT — see [LICENSE.txt](LICENSE.txt)
+License: MIT — see [LICENSE.md](LICENSE.md)
 
 ## Version information
 
