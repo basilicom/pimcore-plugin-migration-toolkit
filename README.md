@@ -3,13 +3,13 @@ License: MIT — see [LICENSE.md](LICENSE.md)
 
 ## Version information
 
-| Bundle Version | PHP  | Pimcore |
-|----------------|------|---------|
-| ^4.0           | ^7.4 | ^6.8    |
+| Bundle Version | PHP  | Pimcore                            |
+|----------------|------|------------------------------------|
+| ^3.0           | ^7.4 | ^6.8    |
 | ^4.0           | ^8.0 | ^10.0   |
 | ^5.0           | ^8.1 | ^11.0   |
 | ^6.0           | ^8.3 | ^12.0   |
-| ^7.0           | ^8.3 | ^12.0   |
+| ^7.0           | ^8.3 | ^12.0 (Platform Version 2025.x)    |
 
 ## Upgrade to 7.0
 
@@ -53,46 +53,16 @@ For all migrations extend them from the class ```AbstractAdvancedPimcoreMigratio
 
 ### Migration Data
 
-If a migration needs data it needs to be located in the following folder:
-```<path/to/migrationFolder>/Migrations/data/<classname-of-the-migration>```
+A migration that needs files (class exports, SQL, assets) reads them from a folder next to it,
+named after the migration class:
 
-### System Settings
-
-System Settings can be set via config.yaml.
-
-Example: 
-
-```yaml
-pimcore_admin:
-    branding:
-        login_screen_invert_colors: true
-        color_login_screen: '#001b36'
-        color_admin_interface: '#001b36'
-        login_screen_custom_image: '/build/images/backend/background-login-screen.jpg'
+```
+migrations/Version20260101120000.php
+migrations/data/Version20260101120000/class_Product_export.json
+migrations/data/Version20260101120000/sql/create.sql
 ```
 
-
-### Language Settings
-
-Language Settings are part of the System Settings and can be set via config.yaml.
-
-Example: 
-
-```yaml
-pimcore:
-    general:
-        timezone: Europe/Berlin
-        redirect_to_maindomain: false
-        language: en
-        valid_languages: 'de,de_CH,en,fr_CH'
-        fallback_languages:
-          de: ''
-          de_CH: ''
-          en: ''
-          fr_CH: ''
-        default_language: en
-        debug_admin_translations: false
-```
+`$this->getDataFolder()` returns that path.
 
 ### Website Settings
 
@@ -207,25 +177,21 @@ $userRolesMigrationHelper->delete($roleName);
 
 ### Bundle / Extension
 
-It is not possible to enable and install one bundle in one migration!
-
-You need to make two migrations one with enable (disable) and one with install (uninstall) and then run it with the
-command
-[Migrate in separate process](#migrate-in-separate-process). Otherwise it would not find the newly enabled bundle for
-the installation.
+Enabling a bundle is a change to `config/bundles.php`, so it cannot be done from a migration. Once
+the bundle is registered there, a migration installs (or uninstalls) it and re-installs the assets.
+With [migrate in separate processes](#migrate-in-separate-processes) every migration gets a freshly
+booted kernel, so a bundle registered by one deploy step is visible to the migration that installs it.
 
 Example: Up
 
-```php 
-$bundleMigrationHelper = $this->getBundleMigrationHelper();
-$bundleMigrationHelper->enable('Basilicom\PimcorePluginMigrationToolkit\PimcorePluginMigrationToolkitBundle');
+```php
+$this->getBundleMigrationHelper()->install(\Pimcore\Bundle\StaticRoutesBundle\PimcoreStaticRoutesBundle::class);
 ```
 
 Example: Down
 
 ```php
-$bundleMigrationHelper = $this->getBundleMigrationHelper();
-$bundleMigrationHelper->disable('Basilicom\PimcorePluginMigrationToolkit\PimcorePluginMigrationToolkitBundle');
+$this->getBundleMigrationHelper()->uninstall(\Pimcore\Bundle\StaticRoutesBundle\PimcoreStaticRoutesBundle::class);
 ```
 
 ### Class Definitions
@@ -256,8 +222,8 @@ Example: Up
 
 ```php 
 $objectbrickName = 'brick';
-$objectbrickMigrationHelper = $this->getObjectbrickMigrationHelper();
-$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForUpMigration($className);
+$objectbrickMigrationHelper = $this->getObjectBrickMigrationHelper();
+$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForUpMigration($objectbrickName);
 $objectbrickMigrationHelper->createOrUpdate($objectbrickName, $jsonPath);
 ```
 
@@ -265,10 +231,10 @@ Example: Down
 
 ```php
 $objectbrickName = 'brick';
-$objectbrickMigrationHelper = $this->getObjectbrickMigrationHelper();
+$objectbrickMigrationHelper = $this->getObjectBrickMigrationHelper();
 $objectbrickMigrationHelper->delete($objectbrickName);
 // OR
-$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForDownMigration($className);
+$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForDownMigration($objectbrickName);
 $objectbrickMigrationHelper->createOrUpdate($objectbrickName, $jsonPath);
 ```
 
@@ -278,8 +244,8 @@ Example: Up
 
 ```php 
 $key = 'test';
-$fieldcollectionMigrationHelper = $this->getFieldcollectionMigrationHelper();
-$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForUpMigration($className);
+$fieldcollectionMigrationHelper = $this->getFieldCollectionMigrationHelper();
+$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForUpMigration($key);
 $fieldcollectionMigrationHelper->createOrUpdate($key, $jsonPath);
 ```
 
@@ -287,10 +253,10 @@ Example: Down
 
 ```php
 $key = 'test';
-$fieldcollectionMigrationHelper = $this->getFieldcollectionMigrationHelper();
+$fieldcollectionMigrationHelper = $this->getFieldCollectionMigrationHelper();
 $fieldcollectionMigrationHelper->delete($key);
 // OR
-$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForDownMigration($className);
+$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForDownMigration($key);
 $fieldcollectionMigrationHelper->createOrUpdate($key, $jsonPath);
 ```
 
@@ -319,7 +285,6 @@ $storeConfig = $classificationStoreMigrationHelper->createOrUpdateStore(
     'Description'
 );
 
-// typehint says it should return int, but it is string
 $storeId = (int) $storeConfig->getId();
 
 $classificationStoreMigrationHelper->createOrUpdateGroup(
@@ -350,7 +315,6 @@ Example: Down
 $storeName = 'StoreName';
 $classificationStoreMigrationHelper = $this->getClassificationStoreMigrationHelper();
 $storeConfig = $classificationStoreMigrationHelper->getStoreByName($storeName);
-// typehint says it should return int, but it is string
 $storeId = (int) $storeConfig->getId();
 $classificationStoreMigrationHelper->deleteGroup($groupName, $storeId);
 $classificationStoreMigrationHelper->deleteKey($fieldName, $storeId);
@@ -576,36 +540,26 @@ $this->getTranslationMigrationHelper()->removeTranslationsByKey(array_keys($this
 
 ## Commands
 
-### Migrate in separate process
+### Migrate in separate processes
 
-Executes the same migrations as the ```doctrine:migrations:migrate``` command, but each one is run in a separate process,
-to prevent problems with PHP classes that changed during the runtime.
+Runs the pending Doctrine migrations like `doctrine:migrations:migrate`, but each one in its own PHP
+process. A migration that changes class definitions or the container therefore never leaves the
+following migrations of the same run with stale classes. Pending migrations come from Doctrine's
+own status calculator, so the list matches `doctrine:migrations:status`.
 
-```shell 
+```shell
 bin/console basilicom:migrations:migrate-in-separate-processes
+bin/console basilicom:migrations:migrate-in-separate-processes --dry-run          # list only
+bin/console basilicom:migrations:migrate-in-separate-processes --bundle App       # class name prefix, -b
+bin/console basilicom:migrations:migrate-in-separate-processes --timeout 0        # seconds per migration, 0 = none, -t
 ```
 
-You're also able to migrate only specific bundles using the bundle prefix.
+Reverting works the same way, one process per migration, newest first:
 
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes --bundle "App"
-bin/console basilicom:migrations:migrate-in-separate-processes --bundle "Pimcore"
-
-bin/console basilicom:migrations:migrate-in-separate-processes -b "App"
-bin/console basilicom:migrations:migrate-in-separate-processes -b "Pimcore"
-```
-
-In some cases you might run migrations on large datasets. Therefor 120s of timeout per migration won't be enough. 
-To adapt the timeout just pass the `--timeout` option. To unset the timeout at all, pass `0`.
-
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes --timeout 0
-bin/console basilicom:migrations:migrate-in-separate-processes --timeout 180
-```
-
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes -t 0
-bin/console basilicom:migrations:migrate-in-separate-processes -t 180
+```shell
+bin/console basilicom:migrations:migrate-in-separate-processes --down prev                                     # latest executed migration
+bin/console basilicom:migrations:migrate-in-separate-processes --down 'App\Migrations\Version20260101120000'   # down to and including
+bin/console basilicom:migrations:migrate-in-separate-processes --down prev --bundle App                        # latest one of that prefix
 ```
 
 ### Import Translations
@@ -668,10 +622,5 @@ write target in `tests/App/config/packages/pimcore.yaml`, so they are readable i
 
 ## Ideas
 
-* command: ```basilicom:migrations:generate <which type of migration>```
-    * types e.g:
-        * general migration for extended class only
-        * class migration template with folders
-        * ...
-* enhance command: ```basilicom:migrations:migrate-in-separate-processes```
-    * to also revert ```prev``` or ```<versionnumber>```
+* command: `basilicom:migrations:generate <type>` — scaffold a migration with its data folder, e.g. for a
+  class definition export
