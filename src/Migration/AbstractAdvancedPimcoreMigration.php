@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Migration;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\NotFoundException;
@@ -20,9 +22,9 @@ use Basilicom\PimcorePluginMigrationToolkit\Helper\UserMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\UserRolesMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\WebsiteSettingsMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\CallbackOutputWriter;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter;
 use Doctrine\DBAL\Connection;
 use Doctrine\Migrations\AbstractMigration;
-use Exception;
 use Pimcore;
 use Pimcore\Extension\Bundle\PimcoreBundleManager;
 use Pimcore\Tool\AssetsInstaller;
@@ -34,22 +36,22 @@ use Symfony\Component\Serializer\Serializer;
 
 abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
 {
-    private ?WebsiteSettingsMigrationHelper $websiteSettingsMigrationHelper = null;
-    private ?StaticRoutesMigrationHelper $staticRoutesMigrationHelper = null;
-    private ?UserRolesMigrationHelper $userRolesMigrationHelper = null;
-    private ?UserMigrationHelper $userMigrationHelper = null;
-    private ?BundleMigrationHelper $bundleMigrationHelper = null;
-    private ?ClassDefinitionMigrationHelper $classDefinitionMigrationHelper = null;
-    private ?ObjectbrickMigrationHelper $objectBrickMigrationHelper = null;
-    private ?FieldcollectionMigrationHelper $fieldCollectionMigrationHelper = null;
-    private ?CustomLayoutMigrationHelper $customLayoutMigrationHelper = null;
-    private ?DocumentMigrationHelper $documentMigrationHelper = null;
-    private ?DataObjectMigrationHelper $dataObjectMigrationHelper = null;
-    private ?AssetMigrationHelper $assetMigrationHelper = null;
-    private ?QuantityValueUnitMigrationHelper $quantityValueUnitMigrationHelper = null;
-    private ?MySqlMigrationHelper $mySqlMigrationHelper = null;
+    private ?WebsiteSettingsMigrationHelper $websiteSettingsMigrationHelper         = null;
+    private ?StaticRoutesMigrationHelper $staticRoutesMigrationHelper               = null;
+    private ?UserRolesMigrationHelper $userRolesMigrationHelper                     = null;
+    private ?UserMigrationHelper $userMigrationHelper                               = null;
+    private ?BundleMigrationHelper $bundleMigrationHelper                           = null;
+    private ?ClassDefinitionMigrationHelper $classDefinitionMigrationHelper         = null;
+    private ?ObjectbrickMigrationHelper $objectBrickMigrationHelper                 = null;
+    private ?FieldcollectionMigrationHelper $fieldCollectionMigrationHelper         = null;
+    private ?CustomLayoutMigrationHelper $customLayoutMigrationHelper               = null;
+    private ?DocumentMigrationHelper $documentMigrationHelper                       = null;
+    private ?DataObjectMigrationHelper $dataObjectMigrationHelper                   = null;
+    private ?AssetMigrationHelper $assetMigrationHelper                             = null;
+    private ?QuantityValueUnitMigrationHelper $quantityValueUnitMigrationHelper     = null;
+    private ?MySqlMigrationHelper $mySqlMigrationHelper                             = null;
     private ?ClassificationStoreMigrationHelper $classificationStoreMigrationHelper = null;
-    private ?TranslationMigrationHelper $translationMigrationHelper = null;
+    private ?TranslationMigrationHelper $translationMigrationHelper                 = null;
 
     private string $dataFolder = '';
 
@@ -57,12 +59,8 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
     {
         parent::__construct($connection, $logger);
 
-        try {
-            $reflection = new ReflectionClass($this);
-            $path = str_replace($reflection->getShortName() . '.php', '', $reflection->getFileName());
-            $this->dataFolder = $path . 'data/' . $reflection->getShortName();
-        } catch (Exception) {
-        }
+        $reflection       = new ReflectionClass($this);
+        $this->dataFolder = dirname((string) $reflection->getFileName()) . '/data/' . $reflection->getShortName();
     }
 
     public function getDataFolder(): string
@@ -119,13 +117,11 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
         return $this->userMigrationHelper;
     }
 
-    /**
-     * @throws NotFoundException
-     */
+    /** @throws NotFoundException */
     public function getBundleMigrationHelper(): BundleMigrationHelper
     {
         if ($this->bundleMigrationHelper === null) {
-            $bundleManager = Pimcore::getContainer()->get(PimcoreBundleManager::class);
+            $bundleManager   = Pimcore::getContainer()->get(PimcoreBundleManager::class);
             $assetsInstaller = Pimcore::getContainer()->get(AssetsInstaller::class);
 
             if (!$bundleManager instanceof PimcoreBundleManager || !$assetsInstaller instanceof AssetsInstaller) {
@@ -172,9 +168,9 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
     public function getCustomLayoutMigrationHelper(): CustomLayoutMigrationHelper
     {
         if ($this->customLayoutMigrationHelper === null) {
-            $encoders = [new JsonEncoder()];
+            $encoders    = [new JsonEncoder()];
             $normalizers = [new ObjectNormalizer()];
-            $serializer = new Serializer($normalizers, $encoders);
+            $serializer  = new Serializer($normalizers, $encoders);
 
             $this->customLayoutMigrationHelper = new CustomLayoutMigrationHelper($this->dataFolder, $serializer);
             $this->customLayoutMigrationHelper->setOutput($this->getOutputWriter());
@@ -246,7 +242,7 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
     public function getTranslationMigrationHelper(): TranslationMigrationHelper
     {
         if ($this->translationMigrationHelper === null) {
-            $this->translationMigrationHelper = new TranslationMigrationHelper();
+            $this->translationMigrationHelper = new TranslationMigrationHelper(new TranslationImporter());
             $this->translationMigrationHelper->setOutput($this->getOutputWriter());
         }
 

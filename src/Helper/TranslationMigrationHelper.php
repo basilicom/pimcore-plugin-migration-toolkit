@@ -1,39 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
-use Exception;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\ImportResult;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\Overwrite;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter;
 use Pimcore\Model\Translation;
 
 class TranslationMigrationHelper extends AbstractMigrationHelper
 {
-    /**
-     * @throws Exception
-     */
-    public function addTranslations(array $translations, string $domain = 'messages'): void
+    public function __construct(private readonly TranslationImporter $importer)
     {
-        foreach ($translations as $key => $languages) {
-            $trans = Translation::getByKey($key, $domain);
-            if (empty($trans)) {
-                $trans = new Translation();
-                $trans->setKey($key);
-                $trans->setDomain($domain);
-            }
-            foreach ($languages as $language => $translation) {
-                $trans->addTranslation($language, $translation);
-            }
-            $trans->save();
-        }
     }
 
-    /**
-     * @throws Exception
-     */
-    public function removeTranslationsByKey(array $keys, string $domain = 'messages'): void
+    /** @param array<string, array<string, string>> $translations key => [locale => text] */
+    public function addTranslations(
+        array $translations,
+        string $domain = Translation::DOMAIN_DEFAULT,
+        Overwrite $overwrite = Overwrite::Always,
+    ): ImportResult {
+        $result = $this->importer->import($translations, $domain, $overwrite);
+        $this->getOutput()->writeMessage($result->summary());
+
+        return $result;
+    }
+
+    /** @param array<string> $keys */
+    public function removeTranslationsByKey(array $keys, string $domain = Translation::DOMAIN_DEFAULT): void
     {
         foreach ($keys as $key) {
-            $trans = Translation::getByKey($key, $domain);
-            $trans?->delete();
+            Translation::getByKey($key, $domain)?->delete();
         }
     }
 }

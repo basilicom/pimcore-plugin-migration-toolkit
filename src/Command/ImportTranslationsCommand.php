@@ -1,77 +1,82 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Command;
 
-use Basilicom\PimcorePluginMigrationToolkit\Translation\Exception\InvalidTranslationFileFormatException;
-use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationService;
-use Exception;
+use Basilicom\PimcorePluginMigrationToolkit\Exceptions\MigrationToolkitException;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\Overwrite;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\Reader\CsvTranslationReader;
+use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter;
 use Pimcore\Console\AbstractCommand;
+use Pimcore\Model\Translation;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand('basilicom:import:translations', 'imports shared translations from a csv file that are not present in the system yet')]
+#[AsCommand(
+    name: self::NAME,
+    description: 'Imports a Pimcore translation CSV export (Tools > Translations) into the translations of one domain.',
+)]
 class ImportTranslationsCommand extends AbstractCommand
 {
-    private TranslationService $translationService;
+    public const string NAME = 'basilicom:translations:import';
 
-    public function __construct()
-    {
+    private const string ARGUMENT_FILE    = 'file';
+    private const string OPTION_DOMAIN    = 'domain';
+    private const string OPTION_OVERWRITE = 'overwrite';
+    private const string OPTION_DELIMITER = 'delimiter';
+
+    public function __construct(
+        private readonly CsvTranslationReader $reader,
+        private readonly TranslationImporter $importer,
+    ) {
         parent::__construct();
-        $this->translationService = new TranslationService;
     }
 
     protected function configure(): void
     {
-        $this->setHelp('this command imports shared translations from a csv export. it will only import translations that are not in the system yet.')
-            ->addArgument('path', InputArgument::REQUIRED, 'the path to the shared translations csv file')
-            ->addOption('admin', null, InputOption::VALUE_NONE, 'import admin translations')
-            ->addOption('delimiter', null, InputOption::VALUE_OPTIONAL, 'delimiter in the csv file', ';')
-            ->addOption('replaceExistingTranslation', null, InputOption::VALUE_NONE, 'if the translation already exist, should it be replaced?');
+        $this
+            ->addArgument(self::ARGUMENT_FILE, InputArgument::REQUIRED, 'Path to the CSV file')
+            ->addOption(self::OPTION_DOMAIN, 'd', InputOption::VALUE_REQUIRED, 'Translation domain', Translation::DOMAIN_DEFAULT)
+            ->addOption(
+                self::OPTION_OVERWRITE,
+                'o',
+                InputOption::VALUE_REQUIRED,
+                sprintf('Overwrite existing labels: %s', implode('|', Overwrite::values())),
+                Overwrite::Never->value,
+            )
+            ->addOption(self::OPTION_DELIMITER, null, InputOption::VALUE_REQUIRED, 'CSV delimiter; detected from the file when omitted');
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
-     * @example bin/console basilicom:import-shared-translations /path/to/shared-translations.csv
-     * @example bin/console basilicom:import-shared-translations /path/to/shared-translations.csv --delimiter=, --replaceExistingTranslation --admin
-     *
-     * the used file is probably an export from the pimcore admin interface. tools > translations > shared translations.
-     * this command simply takes this file and imports it via pimcore api.
-     * before, several validation checks will be made:
-     *
-     * - is the input file in expected format:
-     *     does it have a column 'key'
-     *     are there any fields that pimcore doesn't know about
-     *
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('### Start Import of translation file.');
+        $file      = (string) $input->getArgument(self::ARGUMENT_FILE);
+        $domain    = (string) $input->getOption(self::OPTION_DOMAIN);
+        $delimiter = $input->getOption(self::OPTION_DELIMITER);
+        $overwrite = Overwrite::tryFrom((string) $input->getOption(self::OPTION_OVERWRITE));
 
-        $filePath = $input->getArgument('path');
-        $isAdminTranslation = $input->getOption('admin');
-        $delimiter = $input->getOption('delimiter');
-        $replaceExistingTranslation = $input->getOption('replaceExistingTranslation');
+        if ($overwrite === null) {
+            $this->writeError(sprintf('Option --%s must be one of: %s', self::OPTION_OVERWRITE, implode(', ', Overwrite::values())));
+
+            return self::INVALID;
+        }
 
         try {
-            if ($isAdminTranslation) {
-                $this->translationService->importAdminTranslationCsv($filePath, $delimiter, $replaceExistingTranslation);
-            } else {
-                $this->translationService->importSharedTranslationCsv($filePath, $delimiter, $replaceExistingTranslation);
-            }
-        } catch (InvalidTranslationFileFormatException $invalidTranslationFileFormatException) {
-            $this->writeError('### Error: ' . $invalidTranslationFileFormatException->getMessage());
-            return self::FAILURE;
-        } catch (Exception $objException) {
-            $this->writeError(sprintf('### Error: unable to import shared translations: %s', $objException->getMessage()));
+            $result = $this->importer->import(
+                $this->reader->read($file, is_string($delimiter) ? $delimiter : null),
+                $domain,
+                $overwrite,
+            );
+        } catch (MigrationToolkitException $exception) {
+            $this->writeError($exception->getMessage());
+
             return self::FAILURE;
         }
 
-        $output->writeln('### Finished Import of translation file.');
+        $output->writeln(sprintf('<info>%s</info>', $result->summary()));
 
         return self::SUCCESS;
     }

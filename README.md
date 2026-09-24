@@ -9,6 +9,20 @@ License: MIT — see [LICENSE.md](LICENSE.md)
 | ^4.0           | ^8.0 | ^10.0   |
 | ^5.0           | ^8.1 | ^11.0   |
 | ^6.0           | ^8.3 | ^12.0   |
+| ^7.0           | ^8.3 | ^12.0   |
+
+## Upgrade to 7.0
+
+* Helpers no longer flush the whole Pimcore cache. Pimcore's own `save()` calls invalidate what they touch
+  (`class_<id>`, `customlayout_<id>`, `output`, classification store and user runtime caches), so the
+  `ClearCacheTrait` and its `Cache::clearAll()` are gone. `basilicom:migrations:migrate-in-separate-processes`
+  does not clear the cache before running either.
+* `basilicom:import:translations` became `basilicom:translations:import` with `--domain`, `--overwrite` and
+  `--delimiter` (see [Commands](#commands)). `TranslationService` and `InvalidTranslationFileFormatException`
+  were replaced by `Translation\TranslationImporter` and `Translation\Exception\InvalidTranslationFileException`.
+* `TranslationMigrationHelper::addTranslations()` takes an `Overwrite` mode and returns an `ImportResult`.
+* All parameters are typed; `UserRolesMigrationHelper` declares its nullable strings explicitly (PHP 8.4).
+* `CustomLayoutMigrationHelper` expects a `DecoderInterface` instead of a `SerializerInterface`.
 
 ## Why?
 
@@ -531,9 +545,8 @@ project/src/Migrations/data/<YOUR_MIGRATIONS_CLASS_NAME>/sql/down
 
 ### Translation Helper
 
-to add the translations into the pimcore shared/admin translations.
-default domain is 'messages' (shared translations).
-but you can change it to any domain, also 'admin' (admin translations).
+Adds translations to Pimcore's editable translations. The default domain is `messages` (shared translations);
+any registered domain works, including `admin`.
 
 ```php
 protected array $translations = [
@@ -546,8 +559,15 @@ protected array $translations = [
 
 #### Example: Up
 ```php
+// overwrite labels that already exist (default)
 $this->getTranslationMigrationHelper()->addTranslations($this->translations);
+
+// keep labels editors already changed, add only the missing ones
+$this->getTranslationMigrationHelper()->addTranslations($this->translations, 'messages', Overwrite::Never);
 ```
+
+`addTranslations()` returns an `ImportResult` with the number of created keys, added and replaced labels and the
+locales that were skipped because the domain does not know them.
 
 #### Example: Down
 ```php
@@ -590,15 +610,39 @@ bin/console basilicom:migrations:migrate-in-separate-processes -t 180
 
 ### Import Translations
 
-To import a csv file, like the exported shared translations from pimcore. To Pimcore shared translations. Or to Pimcore
-admin translations.
+Imports a CSV file in the format Pimcore exports under *Tools > Translations* (a `key` column plus one column
+per locale). Existing labels are kept unless `--overwrite=always` is given; the CSV dialect is detected from the
+file unless `--delimiter` is set. Locales the domain does not know are skipped and reported.
 
-```shell 
-# examples
-bin/console basilicom:import:translations /path/to/project/translations/shared-translations.csv
-bin/console basilicom:import:translations /path/to/project/translations/shared-translations.csv --replaceExistingTranslation
-bin/console basilicom:import:translations /path/to/project/translations/admin-translations.csv --replaceExistingTranslation --admin
+```shell
+bin/console basilicom:translations:import /path/to/shared-translations.csv
+bin/console basilicom:translations:import /path/to/admin-translations.csv --domain=admin --overwrite=always
+bin/console basilicom:translations:import /path/to/translations.csv --delimiter=","
 ```
+
+### Sync Translations
+
+Brings the labels of the Symfony catalogues `translations/<domain>.<locale>.yaml` into Pimcore's editable
+translations, so every key shows up under *Tools > Translations* after a deploy. Nested keys are flattened to
+the dotted notation. Existing labels are kept by default — once a label is in the database, editors own it.
+
+```shell
+bin/console basilicom:translations:sync
+bin/console basilicom:translations:sync --domain=messages --domain=admin
+bin/console basilicom:translations:sync --catalogue-dir=/path/to/translations --overwrite=always
+```
+
+Directory and domains default to the bundle configuration:
+
+```yaml
+pimcore_plugin_migration_toolkit:
+    translations:
+        catalogue_dir: '%kernel.project_dir%/translations'
+        domains: [messages]   # add admin when the classic admin UI bundle is installed
+```
+
+The CSV import, the sync and the `TranslationMigrationHelper` all write through
+`Translation\TranslationImporter`, so they behave the same.
 
 ## Ideas
 
