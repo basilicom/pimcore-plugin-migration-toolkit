@@ -41,7 +41,9 @@
   configurable under `pimcore_plugin_migration_toolkit.translations` (default: `messages`; the `admin` domain
   only exists with the classic admin UI bundle).
 * `Translation\TranslationImporter` as the single write path for CSV import, catalogue sync and migration helper;
-  locales a domain does not know are skipped and reported instead of stored.
+  locales a domain does not know are skipped and reported instead of stored. Domains must be registered
+  (`pimcore.translations.domains`); a registered domain's table is created on first use, as Pimcore does
+  on save, so a deploy may sync before a bundle's installer created it.
 
 ## 6.1.0
 * Relicensed from GPL-3.0-or-later to MIT.

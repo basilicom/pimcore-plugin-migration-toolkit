@@ -22,9 +22,11 @@ class TranslationImporter
      */
     public function import(iterable $translations, string $domain, Overwrite $overwrite): ImportResult
     {
-        if (!Translation::isAValidDomain($domain)) {
+        if (!in_array($domain, Translation::getRegisteredDomains(), true)) {
             throw new InvalidSettingException(sprintf('"%s" is not a registered translation domain.', $domain));
         }
+
+        $this->ensureTable($domain);
 
         $validLocales   = Translation::getValidLanguages($domain);
         $createdKeys    = 0;
@@ -78,5 +80,20 @@ class TranslationImporter
         }
 
         return new ImportResult($domain, $createdKeys, $addedLabels, $replacedLabels, array_values($skippedLocales));
+    }
+
+    /**
+     * Pimcore creates the table of a registered domain on the first save; a bundle's installer may not
+     * have run yet when a deploy syncs, and reading before the table exists would fail.
+     */
+    private function ensureTable(string $domain): void
+    {
+        if (Translation::isAValidDomain($domain)) {
+            return;
+        }
+
+        $translation = new Translation();
+        $translation->setDomain($domain);
+        $translation->getDao()->createOrUpdateTable();
     }
 }

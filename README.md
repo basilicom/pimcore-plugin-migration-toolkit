@@ -599,7 +599,9 @@ pimcore_plugin_migration_toolkit:
 ```
 
 The CSV import, the sync and the `TranslationMigrationHelper` all write through
-`Translation\TranslationImporter`, so they behave the same.
+`Translation\TranslationImporter`, so they behave the same. A domain has to be registered in
+`pimcore.translations.domains` (bundles register theirs); its table is created on first use, so a
+deploy may sync before the bundle's installer ran.
 
 ## Development
 

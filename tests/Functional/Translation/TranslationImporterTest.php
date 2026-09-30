@@ -8,6 +8,7 @@ use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
 use Basilicom\PimcorePluginMigrationToolkit\Tests\Functional\AbstractFunctionalTestCase;
 use Basilicom\PimcorePluginMigrationToolkit\Translation\Overwrite;
 use Basilicom\PimcorePluginMigrationToolkit\Translation\TranslationImporter;
+use Pimcore\Db;
 use Pimcore\Model\Translation;
 
 class TranslationImporterTest extends AbstractFunctionalTestCase
@@ -74,26 +75,25 @@ class TranslationImporterTest extends AbstractFunctionalTestCase
     }
 
     /**
-     * The admin domain and its language list exist only with the classic admin UI bundle, which the
-     * test rig does not install; the test follows whatever the installation provides.
+     * The admin domain is registered by default but gets its table and language list only with the
+     * classic admin UI bundle, which the rig does not install; the test follows what is present.
      */
-    public function testUsesTheLanguageListOfTheDomain(): void
+    public function testCreatesTheTableOfARegisteredDomainOnFirstUseAndUsesItsLanguageList(): void
     {
-        if (!Translation::isAValidDomain(Translation::DOMAIN_ADMIN)) {
-            $this->expectException(InvalidSettingException::class);
-            $this->importer->import(['k' => ['en' => 'v']], Translation::DOMAIN_ADMIN, Overwrite::Never);
-
-            return;
+        self::assertContains(Translation::DOMAIN_ADMIN, Translation::getRegisteredDomains());
+        $hadTable = Translation::isAValidDomain(Translation::DOMAIN_ADMIN);
+        if (!$hadTable) {
+            $this->onTearDown(static fn () => Db::get()->executeStatement('DROP TABLE IF EXISTS translations_admin'));
         }
 
         $key    = $this->translationKey(domain: Translation::DOMAIN_ADMIN);
         $result = $this->importer->import([$key => ['en' => 'Admin label']], Translation::DOMAIN_ADMIN, Overwrite::Never);
 
+        self::assertTrue(Translation::isAValidDomain(Translation::DOMAIN_ADMIN), 'the table exists after the first import');
         if (in_array('en', Translation::getValidLanguages(Translation::DOMAIN_ADMIN), true)) {
             self::assertSame('Admin label', Translation::getByKey($key, Translation::DOMAIN_ADMIN)?->getTranslation('en'));
         } else {
             self::assertSame(['en'], $result->skippedLocales);
-            self::assertNull(Translation::getByKey($key, Translation::DOMAIN_ADMIN));
         }
     }
 
