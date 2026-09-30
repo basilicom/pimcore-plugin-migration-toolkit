@@ -1,14 +1,28 @@
 # Pimcore Plugin Migration Toolkit
-License: MIT — see [LICENSE.txt](LICENSE.txt)
+License: MIT — see [LICENSE.md](LICENSE.md)
 
 ## Version information
 
-| Bundle Version | PHP  | Pimcore |
-|----------------|------|---------|
-| ^4.0           | ^7.4 | ^6.8    |
+| Bundle Version | PHP  | Pimcore                            |
+|----------------|------|------------------------------------|
+| ^3.0           | ^7.4 | ^6.8    |
 | ^4.0           | ^8.0 | ^10.0   |
 | ^5.0           | ^8.1 | ^11.0   |
 | ^6.0           | ^8.3 | ^12.0   |
+| ^7.0           | ^8.3 | ^12.0 (Platform Version 2025.x)    |
+
+## Upgrade to 7.0
+
+* Helpers no longer flush the whole Pimcore cache. Pimcore's own `save()` calls invalidate what they touch
+  (`class_<id>`, `customlayout_<id>`, `output`, classification store and user runtime caches), so the
+  `ClearCacheTrait` and its `Cache::clearAll()` are gone. `basilicom:migrations:migrate-in-separate-processes`
+  does not clear the cache before running either.
+* `basilicom:import:translations` became `basilicom:translations:import` with `--domain`, `--overwrite` and
+  `--delimiter` (see [Commands](#commands)). `TranslationService` and `InvalidTranslationFileFormatException`
+  were replaced by `Translation\TranslationImporter` and `Translation\Exception\InvalidTranslationFileException`.
+* `TranslationMigrationHelper::addTranslations()` takes an `Overwrite` mode and returns an `ImportResult`.
+* All parameters are typed; `UserRolesMigrationHelper` declares its nullable strings explicitly (PHP 8.4).
+* `CustomLayoutMigrationHelper` expects a `DecoderInterface` instead of a `SerializerInterface`.
 
 ## Why?
 
@@ -35,50 +49,23 @@ return [
 
 ## Usage Migration Helpers
 
-For all migrations extend them from the class ```AbstractAdvancedPimcoreMigration```.
+For all migrations extend them from the class ```AbstractAdvancedPimcoreMigration``` and call
+`$this->get<Name>MigrationHelper()`. The helpers come from the `MigrationHelperFactory` service, which the
+bundle injects into every migration Doctrine instantiates (it decorates Doctrine's migration factory). A
+project can decorate `MigrationHelperFactory` to replace a helper for all its migrations.
 
 ### Migration Data
 
-If a migration needs data it needs to be located in the following folder:
-```<path/to/migrationFolder>/Migrations/data/<classname-of-the-migration>```
+A migration that needs files (class exports, SQL, assets) reads them from a folder next to it,
+named after the migration class:
 
-### System Settings
-
-System Settings can be set via config.yaml.
-
-Example: 
-
-```yaml
-pimcore_admin:
-    branding:
-        login_screen_invert_colors: true
-        color_login_screen: '#001b36'
-        color_admin_interface: '#001b36'
-        login_screen_custom_image: '/build/images/backend/background-login-screen.jpg'
+```
+migrations/Version20260101120000.php
+migrations/data/Version20260101120000/class_Product_export.json
+migrations/data/Version20260101120000/sql/create.sql
 ```
 
-
-### Language Settings
-
-Language Settings are part of the System Settings and can be set via config.yaml.
-
-Example: 
-
-```yaml
-pimcore:
-    general:
-        timezone: Europe/Berlin
-        redirect_to_maindomain: false
-        language: en
-        valid_languages: 'de,de_CH,en,fr_CH'
-        fallback_languages:
-          de: ''
-          de_CH: ''
-          en: ''
-          fr_CH: ''
-        default_language: en
-        debug_admin_translations: false
-```
+`$this->getDataFolder()` returns that path.
 
 ### Website Settings
 
@@ -193,25 +180,21 @@ $userRolesMigrationHelper->delete($roleName);
 
 ### Bundle / Extension
 
-It is not possible to enable and install one bundle in one migration!
-
-You need to make two migrations one with enable (disable) and one with install (uninstall) and then run it with the
-command
-[Migrate in separate process](#migrate-in-separate-process). Otherwise it would not find the newly enabled bundle for
-the installation.
+Enabling a bundle is a change to `config/bundles.php`, so it cannot be done from a migration. Once
+the bundle is registered there, a migration installs (or uninstalls) it and re-installs the assets.
+With [migrate in separate processes](#migrate-in-separate-processes) every migration gets a freshly
+booted kernel, so a bundle registered by one deploy step is visible to the migration that installs it.
 
 Example: Up
 
-```php 
-$bundleMigrationHelper = $this->getBundleMigrationHelper();
-$bundleMigrationHelper->enable('Basilicom\PimcorePluginMigrationToolkit\PimcorePluginMigrationToolkitBundle');
+```php
+$this->getBundleMigrationHelper()->install(\Pimcore\Bundle\StaticRoutesBundle\PimcoreStaticRoutesBundle::class);
 ```
 
 Example: Down
 
 ```php
-$bundleMigrationHelper = $this->getBundleMigrationHelper();
-$bundleMigrationHelper->disable('Basilicom\PimcorePluginMigrationToolkit\PimcorePluginMigrationToolkitBundle');
+$this->getBundleMigrationHelper()->uninstall(\Pimcore\Bundle\StaticRoutesBundle\PimcoreStaticRoutesBundle::class);
 ```
 
 ### Class Definitions
@@ -242,8 +225,8 @@ Example: Up
 
 ```php 
 $objectbrickName = 'brick';
-$objectbrickMigrationHelper = $this->getObjectbrickMigrationHelper();
-$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForUpMigration($className);
+$objectbrickMigrationHelper = $this->getObjectBrickMigrationHelper();
+$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForUpMigration($objectbrickName);
 $objectbrickMigrationHelper->createOrUpdate($objectbrickName, $jsonPath);
 ```
 
@@ -251,10 +234,10 @@ Example: Down
 
 ```php
 $objectbrickName = 'brick';
-$objectbrickMigrationHelper = $this->getObjectbrickMigrationHelper();
+$objectbrickMigrationHelper = $this->getObjectBrickMigrationHelper();
 $objectbrickMigrationHelper->delete($objectbrickName);
 // OR
-$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForDownMigration($className);
+$jsonPath = $objectbrickMigrationHelper->getJsonDefinitionPathForDownMigration($objectbrickName);
 $objectbrickMigrationHelper->createOrUpdate($objectbrickName, $jsonPath);
 ```
 
@@ -264,8 +247,8 @@ Example: Up
 
 ```php 
 $key = 'test';
-$fieldcollectionMigrationHelper = $this->getFieldcollectionMigrationHelper();
-$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForUpMigration($className);
+$fieldcollectionMigrationHelper = $this->getFieldCollectionMigrationHelper();
+$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForUpMigration($key);
 $fieldcollectionMigrationHelper->createOrUpdate($key, $jsonPath);
 ```
 
@@ -273,10 +256,10 @@ Example: Down
 
 ```php
 $key = 'test';
-$fieldcollectionMigrationHelper = $this->getFieldcollectionMigrationHelper();
+$fieldcollectionMigrationHelper = $this->getFieldCollectionMigrationHelper();
 $fieldcollectionMigrationHelper->delete($key);
 // OR
-$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForDownMigration($className);
+$jsonPath = $fieldcollectionMigrationHelper->getJsonDefinitionPathForDownMigration($key);
 $fieldcollectionMigrationHelper->createOrUpdate($key, $jsonPath);
 ```
 
@@ -305,7 +288,6 @@ $storeConfig = $classificationStoreMigrationHelper->createOrUpdateStore(
     'Description'
 );
 
-// typehint says it should return int, but it is string
 $storeId = (int) $storeConfig->getId();
 
 $classificationStoreMigrationHelper->createOrUpdateGroup(
@@ -336,7 +318,6 @@ Example: Down
 $storeName = 'StoreName';
 $classificationStoreMigrationHelper = $this->getClassificationStoreMigrationHelper();
 $storeConfig = $classificationStoreMigrationHelper->getStoreByName($storeName);
-// typehint says it should return int, but it is string
 $storeId = (int) $storeConfig->getId();
 $classificationStoreMigrationHelper->deleteGroup($groupName, $storeId);
 $classificationStoreMigrationHelper->deleteKey($fieldName, $storeId);
@@ -531,9 +512,8 @@ project/src/Migrations/data/<YOUR_MIGRATIONS_CLASS_NAME>/sql/down
 
 ### Translation Helper
 
-to add the translations into the pimcore shared/admin translations.
-default domain is 'messages' (shared translations).
-but you can change it to any domain, also 'admin' (admin translations).
+Adds translations to Pimcore's editable translations. The default domain is `messages` (shared translations);
+any registered domain works, including `admin`.
 
 ```php
 protected array $translations = [
@@ -546,8 +526,15 @@ protected array $translations = [
 
 #### Example: Up
 ```php
+// overwrite labels that already exist (default)
 $this->getTranslationMigrationHelper()->addTranslations($this->translations);
+
+// keep labels editors already changed, add only the missing ones
+$this->getTranslationMigrationHelper()->addTranslations($this->translations, 'messages', Overwrite::Never);
 ```
+
+`addTranslations()` returns an `ImportResult` with the number of created keys, added and replaced labels and the
+locales that were skipped because the domain does not know them.
 
 #### Example: Down
 ```php
@@ -556,56 +543,92 @@ $this->getTranslationMigrationHelper()->removeTranslationsByKey(array_keys($this
 
 ## Commands
 
-### Migrate in separate process
+### Migrate in separate processes
 
-Executes the same migrations as the ```doctrine:migrations:migrate``` command, but each one is run in a separate process,
-to prevent problems with PHP classes that changed during the runtime.
+Runs the pending Doctrine migrations like `doctrine:migrations:migrate`, but each one in its own PHP
+process. A migration that changes class definitions or the container therefore never leaves the
+following migrations of the same run with stale classes. Pending migrations come from Doctrine's
+own status calculator, so the list matches `doctrine:migrations:status`.
 
-```shell 
+```shell
 bin/console basilicom:migrations:migrate-in-separate-processes
+bin/console basilicom:migrations:migrate-in-separate-processes --dry-run          # list only
+bin/console basilicom:migrations:migrate-in-separate-processes --bundle App       # class name prefix, -b
+bin/console basilicom:migrations:migrate-in-separate-processes --timeout 0        # seconds per migration, 0 = none, -t
 ```
 
-You're also able to migrate only specific bundles using the bundle prefix.
+Reverting works the same way, one process per migration, newest first:
 
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes --bundle "App"
-bin/console basilicom:migrations:migrate-in-separate-processes --bundle "Pimcore"
-
-bin/console basilicom:migrations:migrate-in-separate-processes -b "App"
-bin/console basilicom:migrations:migrate-in-separate-processes -b "Pimcore"
-```
-
-In some cases you might run migrations on large datasets. Therefor 120s of timeout per migration won't be enough. 
-To adapt the timeout just pass the `--timeout` option. To unset the timeout at all, pass `0`.
-
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes --timeout 0
-bin/console basilicom:migrations:migrate-in-separate-processes --timeout 180
-```
-
-```shell 
-bin/console basilicom:migrations:migrate-in-separate-processes -t 0
-bin/console basilicom:migrations:migrate-in-separate-processes -t 180
+```shell
+bin/console basilicom:migrations:migrate-in-separate-processes --down prev                                     # latest executed migration
+bin/console basilicom:migrations:migrate-in-separate-processes --down 'App\Migrations\Version20260101120000'   # down to and including
+bin/console basilicom:migrations:migrate-in-separate-processes --down prev --bundle App                        # latest one of that prefix
 ```
 
 ### Import Translations
 
-To import a csv file, like the exported shared translations from pimcore. To Pimcore shared translations. Or to Pimcore
-admin translations.
+Imports a CSV file in the format Pimcore exports under *Tools > Translations* (a `key` column plus one column
+per locale). Existing labels are kept unless `--overwrite=always` is given; the CSV dialect is detected from the
+file unless `--delimiter` is set. Locales the domain does not know are skipped and reported.
 
-```shell 
-# examples
-bin/console basilicom:import:translations /path/to/project/translations/shared-translations.csv
-bin/console basilicom:import:translations /path/to/project/translations/shared-translations.csv --replaceExistingTranslation
-bin/console basilicom:import:translations /path/to/project/translations/admin-translations.csv --replaceExistingTranslation --admin
+```shell
+bin/console basilicom:translations:import /path/to/shared-translations.csv
+bin/console basilicom:translations:import /path/to/admin-translations.csv --domain=admin --overwrite=always
+bin/console basilicom:translations:import /path/to/translations.csv --delimiter=","
 ```
+
+### Sync Translations
+
+Brings the labels of the Symfony catalogues `translations/<domain>.<locale>.yaml` into Pimcore's editable
+translations, so every key shows up under *Tools > Translations* after a deploy. Nested keys are flattened to
+the dotted notation. Existing labels are kept by default — once a label is in the database, editors own it.
+
+```shell
+bin/console basilicom:translations:sync
+bin/console basilicom:translations:sync --domain=messages --domain=admin
+bin/console basilicom:translations:sync --catalogue-dir=/path/to/translations --overwrite=always
+```
+
+Directory and domains default to the bundle configuration:
+
+```yaml
+pimcore_plugin_migration_toolkit:
+    translations:
+        catalogue_dir: '%kernel.project_dir%/translations'
+        domains: [messages]   # add admin when the classic admin UI bundle is installed
+```
+
+The CSV import, the sync and the `TranslationMigrationHelper` all write through
+`Translation\TranslationImporter`, so they behave the same. A domain has to be registered in
+`pimcore.translations.domains` (bundles register theirs); its table is created on first use, so a
+deploy may sync before the bundle's installer ran.
+
+## Development
+
+The bundle ships its own test rig: `docker-compose.yml` starts a PHP 8.4 container and a throwaway
+MariaDB, the bundle itself is the Composer root package (so `vendor/` contains Pimcore) and
+`tests/App` is a minimal Pimcore project that the tests boot against.
+
+```shell
+make setup            # start the containers, composer install, install Pimcore into tests/App
+make test             # unit + functional tests (make test-unit / make test-functional)
+make lint             # PHP-CS-Fixer dry run + PHPStan level 6 (make lint-php-fix applies the fixes)
+make destroy          # remove containers and volumes
+```
+
+The PHP container runs as `www-data`; pass `DOCKER_USER=root` (as the CI workflow does) when the
+checkout belongs to another uid, e.g. on a GitHub runner.
+
+`docker/install.php` drives Pimcore's installer service directly: the CLI installer insists on a
+signed product key, which a test rig does not have. With an empty encryption secret and the committed
+`tests/App/var/config/needs-install.lock` marker the kernel skips the registration check.
+
+Functional tests live in `tests/Functional`, extend `AbstractFunctionalTestCase`, create uniquely
+named elements and register their removal with `onTearDown()`. Every public helper method has at
+least one test. Saved configurations (static routes, custom layouts, …) use the settings store as
+write target in `tests/App/config/packages/pimcore.yaml`, so they are readable in the same process.
 
 ## Ideas
 
-* command: ```basilicom:migrations:generate <which type of migration>```
-    * types e.g:
-        * general migration for extended class only
-        * class migration template with folders
-        * ...
-* enhance command: ```basilicom:migrations:migrate-in-separate-processes```
-    * to also revert ```prev``` or ```<versionnumber>```
+* command: `basilicom:migrations:generate <type>` — scaffold a migration with its data folder, e.g. for a
+  class definition export

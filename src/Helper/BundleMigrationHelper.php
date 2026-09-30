@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
-use Pimcore;
 use Pimcore\Extension\Bundle\PimcoreBundleManager;
 use Pimcore\Tool\AssetsInstaller;
 
@@ -14,7 +15,7 @@ class BundleMigrationHelper extends AbstractMigrationHelper
     public function __construct(PimcoreBundleManager $bundleManager, AssetsInstaller $assetsInstaller)
     {
         $this->pimcoreBundleManager = $bundleManager;
-        $this->assetsInstaller = $assetsInstaller;
+        $this->assetsInstaller      = $assetsInstaller;
     }
 
     public function install(string $pluginId): void

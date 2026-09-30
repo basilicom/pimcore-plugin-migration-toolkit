@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Migration;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\NotFoundException;
+use Basilicom\PimcorePluginMigrationToolkit\Helper\AbstractMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\AssetMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\BundleMigrationHelper;
 use Basilicom\PimcorePluginMigrationToolkit\Helper\ClassDefinitionMigrationHelper;
@@ -22,47 +25,34 @@ use Basilicom\PimcorePluginMigrationToolkit\Helper\WebsiteSettingsMigrationHelpe
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\CallbackOutputWriter;
 use Doctrine\DBAL\Connection;
 use Doctrine\Migrations\AbstractMigration;
-use Exception;
-use Pimcore;
-use Pimcore\Extension\Bundle\PimcoreBundleManager;
-use Pimcore\Tool\AssetsInstaller;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
 
+/**
+ * Base class for project migrations. The helpers come from the MigrationHelperFactory that
+ * HelperAwareMigrationFactory injects; a migration constructed by hand falls back to a standalone
+ * factory. Every helper is created once per migration and writes through the migration's output.
+ */
 abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
 {
-    private ?WebsiteSettingsMigrationHelper $websiteSettingsMigrationHelper = null;
-    private ?StaticRoutesMigrationHelper $staticRoutesMigrationHelper = null;
-    private ?UserRolesMigrationHelper $userRolesMigrationHelper = null;
-    private ?UserMigrationHelper $userMigrationHelper = null;
-    private ?BundleMigrationHelper $bundleMigrationHelper = null;
-    private ?ClassDefinitionMigrationHelper $classDefinitionMigrationHelper = null;
-    private ?ObjectbrickMigrationHelper $objectBrickMigrationHelper = null;
-    private ?FieldcollectionMigrationHelper $fieldCollectionMigrationHelper = null;
-    private ?CustomLayoutMigrationHelper $customLayoutMigrationHelper = null;
-    private ?DocumentMigrationHelper $documentMigrationHelper = null;
-    private ?DataObjectMigrationHelper $dataObjectMigrationHelper = null;
-    private ?AssetMigrationHelper $assetMigrationHelper = null;
-    private ?QuantityValueUnitMigrationHelper $quantityValueUnitMigrationHelper = null;
-    private ?MySqlMigrationHelper $mySqlMigrationHelper = null;
-    private ?ClassificationStoreMigrationHelper $classificationStoreMigrationHelper = null;
-    private ?TranslationMigrationHelper $translationMigrationHelper = null;
+    private ?MigrationHelperFactory $helperFactory = null;
 
-    private string $dataFolder = '';
+    /** @var array<class-string<AbstractMigrationHelper>, AbstractMigrationHelper> */
+    private array $helpers = [];
+
+    private string $dataFolder;
 
     public function __construct(Connection $connection, LoggerInterface $logger)
     {
         parent::__construct($connection, $logger);
 
-        try {
-            $reflection = new ReflectionClass($this);
-            $path = str_replace($reflection->getShortName() . '.php', '', $reflection->getFileName());
-            $this->dataFolder = $path . 'data/' . $reflection->getShortName();
-        } catch (Exception) {
-        }
+        $reflection       = new ReflectionClass($this);
+        $this->dataFolder = dirname((string) $reflection->getFileName()) . '/data/' . $reflection->getShortName();
+    }
+
+    public function setMigrationHelperFactory(MigrationHelperFactory $helperFactory): void
+    {
+        $this->helperFactory = $helperFactory;
     }
 
     public function getDataFolder(): string
@@ -72,184 +62,114 @@ abstract class AbstractAdvancedPimcoreMigration extends AbstractMigration
 
     public function getOutputWriter(): CallbackOutputWriter
     {
-        return new CallbackOutputWriter(
-            function ($message) {
-                $this->write($message);
-            }
-        );
+        return new CallbackOutputWriter(function (string $message): void {
+            $this->write($message);
+        });
     }
 
     public function getWebsiteSettingsMigrationHelper(): WebsiteSettingsMigrationHelper
     {
-        if ($this->websiteSettingsMigrationHelper === null) {
-            $this->websiteSettingsMigrationHelper = new WebsiteSettingsMigrationHelper();
-            $this->websiteSettingsMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->websiteSettingsMigrationHelper;
+        return $this->helper(WebsiteSettingsMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->websiteSettings());
     }
 
     public function getStaticRoutesMigrationHelper(): StaticRoutesMigrationHelper
     {
-        if ($this->staticRoutesMigrationHelper === null) {
-            $this->staticRoutesMigrationHelper = new StaticRoutesMigrationHelper();
-            $this->staticRoutesMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->staticRoutesMigrationHelper;
+        return $this->helper(StaticRoutesMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->staticRoutes());
     }
 
     public function getUserRolesMigrationHelper(): UserRolesMigrationHelper
     {
-        if ($this->userRolesMigrationHelper === null) {
-            $this->userRolesMigrationHelper = new UserRolesMigrationHelper();
-            $this->userRolesMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->userRolesMigrationHelper;
+        return $this->helper(UserRolesMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->userRoles());
     }
 
     public function getUserMigrationHelper(): UserMigrationHelper
     {
-        if ($this->userMigrationHelper === null) {
-            $this->userMigrationHelper = new UserMigrationHelper();
-            $this->userMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->userMigrationHelper;
+        return $this->helper(UserMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->user());
     }
 
-    /**
-     * @throws NotFoundException
-     */
+    /** @throws NotFoundException */
     public function getBundleMigrationHelper(): BundleMigrationHelper
     {
-        if ($this->bundleMigrationHelper === null) {
-            $bundleManager = Pimcore::getContainer()->get(PimcoreBundleManager::class);
-            $assetsInstaller = Pimcore::getContainer()->get(AssetsInstaller::class);
-
-            if (!$bundleManager instanceof PimcoreBundleManager || !$assetsInstaller instanceof AssetsInstaller) {
-                throw new NotFoundException('PimcoreBundleManager or AssetsInstaller not found');
-            }
-
-            $this->bundleMigrationHelper = new BundleMigrationHelper($bundleManager, $assetsInstaller);
-            $this->bundleMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->bundleMigrationHelper;
+        return $this->helper(BundleMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->bundle());
     }
 
     public function getClassDefinitionMigrationHelper(): ClassDefinitionMigrationHelper
     {
-        if ($this->classDefinitionMigrationHelper === null) {
-            $this->classDefinitionMigrationHelper = new ClassDefinitionMigrationHelper($this->dataFolder);
-            $this->classDefinitionMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->classDefinitionMigrationHelper;
+        return $this->helper(ClassDefinitionMigrationHelper::class, fn (MigrationHelperFactory $factory) => $factory->classDefinition($this->dataFolder));
     }
 
     public function getObjectBrickMigrationHelper(): ObjectbrickMigrationHelper
     {
-        if ($this->objectBrickMigrationHelper === null) {
-            $this->objectBrickMigrationHelper = new ObjectbrickMigrationHelper($this->dataFolder);
-            $this->objectBrickMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->objectBrickMigrationHelper;
+        return $this->helper(ObjectbrickMigrationHelper::class, fn (MigrationHelperFactory $factory) => $factory->objectbrick($this->dataFolder));
     }
 
     public function getFieldCollectionMigrationHelper(): FieldcollectionMigrationHelper
     {
-        if ($this->fieldCollectionMigrationHelper === null) {
-            $this->fieldCollectionMigrationHelper = new FieldcollectionMigrationHelper($this->dataFolder);
-            $this->fieldCollectionMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->fieldCollectionMigrationHelper;
+        return $this->helper(FieldcollectionMigrationHelper::class, fn (MigrationHelperFactory $factory) => $factory->fieldcollection($this->dataFolder));
     }
 
     public function getCustomLayoutMigrationHelper(): CustomLayoutMigrationHelper
     {
-        if ($this->customLayoutMigrationHelper === null) {
-            $encoders = [new JsonEncoder()];
-            $normalizers = [new ObjectNormalizer()];
-            $serializer = new Serializer($normalizers, $encoders);
-
-            $this->customLayoutMigrationHelper = new CustomLayoutMigrationHelper($this->dataFolder, $serializer);
-            $this->customLayoutMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->customLayoutMigrationHelper;
+        return $this->helper(CustomLayoutMigrationHelper::class, fn (MigrationHelperFactory $factory) => $factory->customLayout($this->dataFolder));
     }
 
     public function getDocumentMigrationHelper(): DocumentMigrationHelper
     {
-        if ($this->documentMigrationHelper === null) {
-            $this->documentMigrationHelper = new DocumentMigrationHelper();
-            $this->documentMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->documentMigrationHelper;
+        return $this->helper(DocumentMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->document());
     }
 
     public function getDataObjectMigrationHelper(): DataObjectMigrationHelper
     {
-        if ($this->dataObjectMigrationHelper === null) {
-            $this->dataObjectMigrationHelper = new DataObjectMigrationHelper();
-            $this->dataObjectMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->dataObjectMigrationHelper;
+        return $this->helper(DataObjectMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->dataObject());
     }
 
     public function getAssetMigrationHelper(): AssetMigrationHelper
     {
-        if ($this->assetMigrationHelper === null) {
-            $this->assetMigrationHelper = new AssetMigrationHelper();
-            $this->assetMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->assetMigrationHelper;
+        return $this->helper(AssetMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->asset());
     }
 
     public function getQuantityValueUnitMigrationHelper(): QuantityValueUnitMigrationHelper
     {
-        if ($this->quantityValueUnitMigrationHelper === null) {
-            $this->quantityValueUnitMigrationHelper = new QuantityValueUnitMigrationHelper();
-            $this->quantityValueUnitMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->quantityValueUnitMigrationHelper;
+        return $this->helper(QuantityValueUnitMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->quantityValueUnit());
     }
 
     public function getMySqlMigrationHelper(): MySqlMigrationHelper
     {
-        if ($this->mySqlMigrationHelper === null) {
-            $this->mySqlMigrationHelper = new MySqlMigrationHelper($this->dataFolder);
-            $this->mySqlMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->mySqlMigrationHelper;
+        return $this->helper(MySqlMigrationHelper::class, fn (MigrationHelperFactory $factory) => $factory->mySql($this->dataFolder));
     }
 
     public function getClassificationStoreMigrationHelper(): ClassificationStoreMigrationHelper
     {
-        if ($this->classificationStoreMigrationHelper === null) {
-            $this->classificationStoreMigrationHelper = new ClassificationStoreMigrationHelper();
-            $this->classificationStoreMigrationHelper->setOutput($this->getOutputWriter());
-        }
-
-        return $this->classificationStoreMigrationHelper;
+        return $this->helper(ClassificationStoreMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->classificationStore());
     }
 
     public function getTranslationMigrationHelper(): TranslationMigrationHelper
     {
-        if ($this->translationMigrationHelper === null) {
-            $this->translationMigrationHelper = new TranslationMigrationHelper();
-            $this->translationMigrationHelper->setOutput($this->getOutputWriter());
+        return $this->helper(TranslationMigrationHelper::class, static fn (MigrationHelperFactory $factory) => $factory->translation());
+    }
+
+    protected function getMigrationHelperFactory(): MigrationHelperFactory
+    {
+        return $this->helperFactory ??= MigrationHelperFactory::standalone();
+    }
+
+    /**
+     * @template T of AbstractMigrationHelper
+     *
+     * @param class-string<T> $class
+     * @param callable(MigrationHelperFactory): T $create
+     *
+     * @return T
+     */
+    private function helper(string $class, callable $create): AbstractMigrationHelper
+    {
+        if (!isset($this->helpers[$class])) {
+            $helper = $create($this->getMigrationHelperFactory());
+            $helper->setOutput($this->getOutputWriter());
+            $this->helpers[$class] = $helper;
         }
 
-        return $this->translationMigrationHelper;
+        /** @var T */
+        return $this->helpers[$class];
     }
 }

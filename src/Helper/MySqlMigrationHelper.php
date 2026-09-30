@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\NotFoundException;
@@ -13,14 +15,7 @@ class MySqlMigrationHelper extends AbstractMigrationHelper
         $this->dataFolder = sprintf('%s/sql', $dataFolder);
     }
 
-    /**
-     * @param string $sqlFile
-     * @param string $direction
-     *
-     * @return string
-     *
-     * @throws NotFoundException
-     */
+    /** @throws NotFoundException */
     public function loadSqlFile(string $sqlFile, string $direction = self::UP): string
     {
         $sqlFilePath = $this->getSqlFilePath($sqlFile, $direction);
@@ -37,7 +32,7 @@ class MySqlMigrationHelper extends AbstractMigrationHelper
         return file_get_contents($sqlFilePath);
     }
 
-    private function getSqlFilePath($sqlFile, string $direction): string
+    private function getSqlFilePath(string $sqlFile, string $direction): string
     {
         return sprintf(
             '%s/%s%s',

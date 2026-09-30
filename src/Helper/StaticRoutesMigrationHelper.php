@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -50,9 +52,7 @@ class StaticRoutesMigrationHelper extends AbstractMigrationHelper
         $route->save();
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function delete(string $name): void
     {
         $route = Staticroute::getByName($name);
@@ -65,5 +65,7 @@ class StaticRoutesMigrationHelper extends AbstractMigrationHelper
         }
 
         $route->delete();
+
+        $this->forgetRuntimeCache();
     }
 }

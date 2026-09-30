@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -15,14 +17,12 @@ use Pimcore\Model\User\Workspace\Document as WorkspaceDocument;
 class UserRolesMigrationHelper extends AbstractMigrationHelper
 {
     /**
-     * @param string $name
-     * @param array $permissions see database table users_permission_definitions
-     * @param array $docTypes
-     * @param array $classes
-     * @param array $viewWebsiteTranslations
-     * @param array $editWebsiteTranslations
-     * @param array $perspectives
-     * @param int $parentId
+     * @param array<string> $permissions see database table users_permission_definitions
+     * @param array<string> $docTypes
+     * @param array<string> $classes
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     * @param array<string> $perspectives
      *
      * @throws InvalidSettingException
      * @throws Exception
@@ -56,19 +56,15 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $this->addSharedTranslationSettings($role, $viewWebsiteTranslations, $editWebsiteTranslations);
 
         $role->save();
-
-        $this->clearCache();
     }
 
     /**
-     * @param string $name
-     * @param array $permissions see database table users_permission_definitions
-     * @param array $docTypes
-     * @param array $classes
-     * @param array $viewWebsiteTranslations
-     * @param array $editWebsiteTranslations
-     * @param array $perspectives
-     * @param int $parentId
+     * @param array<string> $permissions see database table users_permission_definitions
+     * @param array<string> $docTypes
+     * @param array<string> $classes
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     * @param array<string> $perspectives
      *
      * @throws InvalidSettingException
      * @throws Exception
@@ -110,13 +106,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         }
 
         $role->save();
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function addWorkspaceDataObject(
         string $roleName,
         string $path,
@@ -131,9 +123,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         bool $settings = false,
         bool $versions = false,
         bool $properties = false,
-        string $layouts = null,
-        string $lEdit = null,
-        string $lView = null,
+        ?string $layouts = null,
+        ?string $lEdit = null,
+        ?string $lView = null,
     ): void {
         $role = $this->getRole($roleName, 'Not adding WorkspaceDataObject to User Role with name "%s", because User Role does not exists.');
 
@@ -188,13 +180,13 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         bool $settings = false,
         bool $versions = false,
         bool $properties = false,
-        string $layouts = null,
-        string $lEdit = null,
-        string $lView = null,
+        ?string $layouts = null,
+        ?string $lEdit = null,
+        ?string $lView = null,
     ): void {
         $role = $this->getRole($roleName, 'Not updating WorkspaceDataObject of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesObject();
+        $workspaceElements      = $role->getWorkspacesObject();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
@@ -232,8 +224,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesObject($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
     /**
@@ -244,7 +234,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     {
         $role = $this->getRole($roleName, 'Not deleting WorkspaceDataObject of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesObject();
+        $workspaceElements      = $role->getWorkspacesObject();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
@@ -269,13 +259,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesObject($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function addWorkspaceDocument(
         string $roleName,
         string $path,
@@ -344,7 +330,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     ): void {
         $role = $this->getRole($roleName, 'Not updating WorkspaceDocument of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesDocument();
+        $workspaceElements      = $role->getWorkspacesDocument();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
@@ -379,8 +365,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesDocument($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
     /**
@@ -391,7 +375,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     {
         $role = $this->getRole($roleName, 'Not deleting WorkspaceDocument of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesDocument();
+        $workspaceElements      = $role->getWorkspacesDocument();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
@@ -416,13 +400,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesDocument($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function addWorkspaceAsset(
         string $roleName,
         string $path,
@@ -485,7 +465,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     ): void {
         $role = $this->getRole($roleName, 'Not updating WorkspaceAsset of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesAsset();
+        $workspaceElements      = $role->getWorkspacesAsset();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $workspaceElement) {
@@ -518,8 +498,6 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesAsset($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
     /**
@@ -530,7 +508,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
     {
         $role = $this->getRole($roleName, 'Not deleting WorkspaceAsset of User Role with name "%s", because User Role does not exists.');
 
-        $workspaceElements = $role->getWorkspacesAsset();
+        $workspaceElements      = $role->getWorkspacesAsset();
         $workspaceElementExists = false;
 
         foreach ($workspaceElements as $key => $workspaceElement) {
@@ -555,13 +533,9 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
 
         $role->setWorkspacesAsset($workspaceElements);
         $role->save();
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function delete(string $name): void
     {
         $role = Role::getByName($name);
@@ -576,6 +550,10 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $role->delete();
     }
 
+    /**
+     * @param array<string> $viewWebsiteTranslations
+     * @param array<string> $editWebsiteTranslations
+     */
     private function addSharedTranslationSettings(
         Role $role,
         array $viewWebsiteTranslations,
@@ -609,9 +587,7 @@ class UserRolesMigrationHelper extends AbstractMigrationHelper
         $role->setWebsiteTranslationLanguagesEdit($editWebsiteTranslations);
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     private function getRole(string $roleName, string $messageTemplate): Role
     {
         $role = Role::getByName($roleName);

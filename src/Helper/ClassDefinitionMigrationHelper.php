@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -39,17 +41,13 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
 
         if (empty($class)) {
             $classConfig = json_decode($configJson, true);
-            $class = $this->create($classConfig['id'], $className);
+            $class       = $this->create($classConfig['id'], $className);
         }
 
         Service::importClassDefinitionFromJson($class, $configJson, true);
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     private function create(string $id, string $className): ClassDefinition
     {
         try {
@@ -77,9 +75,7 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
         }
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function delete(string $className): void
     {
         $classDefinition = ClassDefinition::getByName($className);
@@ -95,19 +91,21 @@ class ClassDefinitionMigrationHelper extends AbstractMigrationHelper
         }
 
         $classDefinition->delete();
+
+        $this->forgetRuntimeCache();
     }
 
-    public function getJsonDefinitionPathForUpMigration($className): string
+    public function getJsonDefinitionPathForUpMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::UP);
     }
 
-    public function getJsonDefinitionPathForDownMigration($className): string
+    public function getJsonDefinitionPathForDownMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::DOWN);
     }
 
-    private function getJsonFileNameFor($className, string $direction): string
+    private function getJsonFileNameFor(string $className, string $direction): string
     {
         $dataFolder = $direction === self::DOWN ? $this->dataFolder . '/down/' : $this->dataFolder . '/';
         $dataFolder .= 'class_' . $className . '_export.json';

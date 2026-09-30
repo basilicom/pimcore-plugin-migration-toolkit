@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -33,9 +35,7 @@ class DataObjectMigrationHelper extends AbstractMigrationHelper
         $this->createFolderByPath($intendedPath);
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createFolderByPath(string $path): void
     {
         try {

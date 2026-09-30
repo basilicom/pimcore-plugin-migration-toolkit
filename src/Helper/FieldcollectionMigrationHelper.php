@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -39,13 +41,9 @@ class FieldcollectionMigrationHelper extends AbstractMigrationHelper
 
         $configJson = file_get_contents($pathToJsonConfig);
         Service::importFieldCollectionFromJson($fieldcollection, $configJson);
-
-        $this->clearCache();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     private function create(string $key): FieldcollectionDefinition
     {
         try {
@@ -68,9 +66,7 @@ class FieldcollectionMigrationHelper extends AbstractMigrationHelper
         }
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function delete(string $key): void
     {
         $fieldcollection = FieldcollectionDefinition::getByKey($key);
@@ -83,19 +79,21 @@ class FieldcollectionMigrationHelper extends AbstractMigrationHelper
         }
 
         $fieldcollection->delete();
+
+        $this->forgetRuntimeCache();
     }
 
-    public function getJsonDefinitionPathForUpMigration($className): string
+    public function getJsonDefinitionPathForUpMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::UP);
     }
 
-    public function getJsonDefinitionPathForDownMigration($className): string
+    public function getJsonDefinitionPathForDownMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::DOWN);
     }
 
-    private function getJsonFileNameFor($className, string $direction): string
+    private function getJsonFileNameFor(string $className, string $direction): string
     {
         $dataFolder = $direction === self::DOWN ? $this->dataFolder . '/down/' : $this->dataFolder . '/';
         $dataFolder .= 'fieldcollection_' . $className . '_export.json';

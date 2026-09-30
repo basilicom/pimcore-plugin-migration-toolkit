@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -16,12 +18,7 @@ class ObjectbrickMigrationHelper extends AbstractMigrationHelper
         $this->dataFolder = $dataFolder;
     }
 
-    /**
-     * @param string $key
-     * @param string $pathToJsonConfig
-     *
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createOrUpdate(string $key, string $pathToJsonConfig): void
     {
         if (!file_exists($pathToJsonConfig)) {
@@ -41,17 +38,9 @@ class ObjectbrickMigrationHelper extends AbstractMigrationHelper
 
         $configJson = file_get_contents($pathToJsonConfig);
         Service::importObjectBrickFromJson($objectbrick, $configJson);
-
-        $this->clearCache();
     }
 
-    /**
-     * @param string $key
-     *
-     * @return ObjectbrickDefinition
-     *
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     private function create(string $key): ObjectbrickDefinition
     {
         try {
@@ -86,19 +75,21 @@ class ObjectbrickMigrationHelper extends AbstractMigrationHelper
         }
 
         $objectbricks->delete();
+
+        $this->forgetRuntimeCache();
     }
 
-    public function getJsonDefinitionPathForUpMigration($className): string
+    public function getJsonDefinitionPathForUpMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::UP);
     }
 
-    public function getJsonDefinitionPathForDownMigration($className): string
+    public function getJsonDefinitionPathForDownMigration(string $className): string
     {
         return $this->getJsonFileNameFor($className, self::DOWN);
     }
 
-    private function getJsonFileNameFor($className, string $direction): string
+    private function getJsonFileNameFor(string $className, string $direction): string
     {
         $dataFolder = $this->dataFolder;
         if ($direction === self::DOWN) {

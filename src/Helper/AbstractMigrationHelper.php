@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\NullOutputWriter;
 use Basilicom\PimcorePluginMigrationToolkit\OutputWriter\OutputWriterInterface;
-use Basilicom\PimcorePluginMigrationToolkit\Trait\ClearCacheTrait;
+use Pimcore\Cache\RuntimeCache;
 use Pimcore\Tool;
 
 abstract class AbstractMigrationHelper
 {
-    use ClearCacheTrait;
+    public const string UP   = 'up';
+    public const string DOWN = 'down';
 
-    const string UP = 'up';
-    const string DOWN = 'down';
-
-    protected OutputWriterInterface $output;
+    protected ?OutputWriterInterface $output = null;
 
     public function setOutput(OutputWriterInterface $output): void
     {
@@ -23,15 +23,21 @@ abstract class AbstractMigrationHelper
 
     protected function getOutput(): OutputWriterInterface
     {
-        if (!$this->output instanceof OutputWriterInterface) {
-            return new NullOutputWriter();
-        }
-
-        return $this->output;
+        return $this->output ?? new NullOutputWriter();
     }
 
     protected function isValidLanguage(string $language): bool
     {
         return in_array($language, Tool::getValidLanguages());
+    }
+
+    /**
+     * Pimcore's config-like models (static routes, translations, website settings, units, definitions)
+     * keep a deleted entry in the process-local runtime cache, so a create() later in the same
+     * migration would still see it. Only that cache is dropped — never the shared Pimcore cache.
+     */
+    protected function forgetRuntimeCache(): void
+    {
+        RuntimeCache::clear();
     }
 }

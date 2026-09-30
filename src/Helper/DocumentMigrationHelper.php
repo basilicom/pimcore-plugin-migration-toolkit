@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -11,17 +13,17 @@ use Pimcore\Model\Element\Service;
 
 class DocumentMigrationHelper extends AbstractMigrationHelper
 {
-    const string TYPE_PAGE = 'page';
-    const string TYPE_EMAIL = 'email';
-    const array VALID_DOCUMENT_TYPES = [self::TYPE_EMAIL, self::TYPE_PAGE];
+    public const string TYPE_PAGE           = 'page';
+    public const string TYPE_EMAIL          = 'email';
+    public const array VALID_DOCUMENT_TYPES = [self::TYPE_EMAIL, self::TYPE_PAGE];
 
-    const string EMAIl_PROP_SUBJECT = 'subject';
-    const string EMAIl_PROP_FROM = 'from';
-    const string EMAIl_PROP_REPLY_TO = 'replyTo';
-    const string EMAIl_PROP_TO = 'to';
-    const string EMAIl_PROP_CC = 'cc';
-    const string EMAIl_PROP_BCC = 'bcc';
-    const array EMAIL_PROPS = [self::EMAIl_PROP_SUBJECT, self::EMAIl_PROP_FROM, self::EMAIl_PROP_REPLY_TO, self::EMAIl_PROP_TO, self::EMAIl_PROP_CC, self::EMAIl_PROP_BCC];
+    public const string EMAIl_PROP_SUBJECT  = 'subject';
+    public const string EMAIl_PROP_FROM     = 'from';
+    public const string EMAIl_PROP_REPLY_TO = 'replyTo';
+    public const string EMAIl_PROP_TO       = 'to';
+    public const string EMAIl_PROP_CC       = 'cc';
+    public const string EMAIl_PROP_BCC      = 'bcc';
+    public const array EMAIL_PROPS          = [self::EMAIl_PROP_SUBJECT, self::EMAIl_PROP_FROM, self::EMAIl_PROP_REPLY_TO, self::EMAIl_PROP_TO, self::EMAIl_PROP_CC, self::EMAIl_PROP_BCC];
 
     private bool $shouldPublish = false;
 
@@ -55,9 +57,7 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         return $this->create($parent, $name, $key, $controller, self::TYPE_PAGE);
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createEmailByPath(
         string $key,
         string $controller,
@@ -95,11 +95,12 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
     }
 
     /**
+     * @param array<string, string> $emailDetails
+     *
      * @throws InvalidSettingException
      * @throws Exception
      *
      * @see \Pimcore\Bundle\AdminBundle\Controller\Admin\Document\DocumentController::addAction()
-     *
      */
     private function create(
         ?Document $parent,
@@ -168,9 +169,7 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         return $doc;
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function createFolderByPath(string $path): Document\Folder
     {
         return Document\Service::createFolderByPath($path);
@@ -197,9 +196,7 @@ class DocumentMigrationHelper extends AbstractMigrationHelper
         $document->delete();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function deleteByPath(string $path): void
     {
         if (empty($path)) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\OutputWriter;
 
 use Closure;
@@ -13,7 +15,7 @@ class CallbackOutputWriter implements OutputWriterInterface
         $this->callback = $callback;
     }
 
-    public function writeMessage($message): void
+    public function writeMessage(string $message): void
     {
         ($this->callback)($message);
     }

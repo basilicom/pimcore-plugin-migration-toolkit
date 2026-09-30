@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Basilicom\PimcorePluginMigrationToolkit\Helper;
 
 use Basilicom\PimcorePluginMigrationToolkit\Exceptions\InvalidSettingException;
@@ -11,9 +13,7 @@ use Pimcore\Model\Element\Service;
 
 class AssetMigrationHelper extends AbstractMigrationHelper
 {
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function createAsset(string $dataSource, string $targetFolderPath, ?string $assetKey = null): Asset
     {
         if (file_exists($dataSource) === false || is_readable($dataSource) === false) {
@@ -24,7 +24,7 @@ class AssetMigrationHelper extends AbstractMigrationHelper
         $targetFolder = AssetService::createFolderByPath($targetFolderPath);
 
         $fileinfo = pathinfo($dataSource);
-        $key = Service::getValidKey($assetKey ?? $fileinfo['basename'], 'asset');
+        $key      = Service::getValidKey($assetKey ?? $fileinfo['basename'], 'asset');
 
         $fullPath = $targetFolder->getFullPath() . '/' . $key;
         if (Asset::getByPath($fullPath, ['force' => true]) instanceof Asset) {
@@ -42,9 +42,7 @@ class AssetMigrationHelper extends AbstractMigrationHelper
         return $asset;
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     public function updateAsset(Asset $asset, string $dataSource, ?string $newAssetName = null): void
     {
         if (file_exists($dataSource) === false || is_readable($dataSource) === false) {
@@ -52,16 +50,14 @@ class AssetMigrationHelper extends AbstractMigrationHelper
         }
 
         $fileinfo = pathinfo($dataSource);
-        $key = Service::getValidKey($newAssetName ?? $fileinfo['basename'], 'asset');
+        $key      = Service::getValidKey($newAssetName ?? $fileinfo['basename'], 'asset');
 
         $asset->setKey($key);
         $asset->setData(file_get_contents($dataSource));
         $asset->save();
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createFolderByParentId(string $name, int $parentId): void
     {
         $parent = Folder::getById($parentId);
@@ -80,9 +76,7 @@ class AssetMigrationHelper extends AbstractMigrationHelper
         $this->createFolderByPath($intendedPath);
     }
 
-    /**
-     * @throws InvalidSettingException
-     */
+    /** @throws InvalidSettingException */
     public function createFolderByPath(string $path): void
     {
         try {

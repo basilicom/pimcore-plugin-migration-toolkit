@@ -1,0 +1,10 @@
+security:
+  providers:
+    pimcore_admin:
+      id: Pimcore\Security\User\UserProvider
+  firewalls:
+    main:
+      pattern: ^/
+      security: false
+  role_hierarchy:
+    ROLE_PIMCORE_ADMIN: [ROLE_PIMCORE_USER]

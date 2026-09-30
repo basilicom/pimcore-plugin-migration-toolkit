@@ -1,0 +1,25 @@
+parameters:
+  secret: '%env(APP_SECRET)%'
+
+framework:
+  secret: '%env(APP_SECRET)%'
+  session:
+    enabled: true
+    handler_id: session.handler.native_file
+    save_path: '%kernel.cache_dir%/sessions'
+  mailer:
+    transports:
+      main: 'null://null'
+  cache:
+    pools:
+      pimcore.cache.pool:
+        public: true
+        tags: true
+        adapter: cache.adapter.array
+  messenger:
+    transports:
+      pimcore_core: 'sync://'
+      pimcore_maintenance: 'sync://'
+      pimcore_scheduled_tasks: 'sync://'
+      pimcore_image_optimize: 'sync://'
+      pimcore_asset_update: 'sync://'
