@@ -614,6 +614,9 @@ make lint             # PHP-CS-Fixer dry run + PHPStan level 6 (make lint-php-fi
 make destroy          # remove containers and volumes
 ```
 
+The PHP container runs as `www-data`; pass `DOCKER_USER=root` (as the CI workflow does) when the
+checkout belongs to another uid, e.g. on a GitHub runner.
+
 `docker/install.php` drives Pimcore's installer service directly: the CLI installer insists on a
 signed product key, which a test rig does not have. With an empty encryption secret and the committed
 `tests/App/var/config/needs-install.lock` marker the kernel skips the registration check.

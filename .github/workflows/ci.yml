@@ -9,6 +9,9 @@ jobs:
   test:
     name: Lint and test against Pimcore 12
     runs-on: ubuntu-latest
+    env:
+      # The checkout belongs to the runner's uid, which www-data cannot write to through the bind mount.
+      DOCKER_USER: root
     steps:
       - uses: actions/checkout@v4
 

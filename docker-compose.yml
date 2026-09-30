@@ -11,6 +11,7 @@ services:
       APP_SECRET: toolkit-test-rig-secret
       COMPOSER_HOME: /tmp/composer
       COMPOSER_MEMORY_LIMIT: -1
+      COMPOSER_ALLOW_SUPERUSER: 1
       MYSQL_HOST: db
       MYSQL_PORT: 3306
       MYSQL_USER: root

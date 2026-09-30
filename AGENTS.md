@@ -28,6 +28,8 @@
   `docker/install.php` through the Installer *service* — the CLI installer wants a signed product key. The
   committed `tests/App/var/config/needs-install.lock` plus an empty encryption secret make the kernel skip
   the registration check. `tests/bootstrap.php` boots that kernel once for both suites.
+- **Container user**: `make` runs the PHP container as `www-data` (`DOCKER_USER`); CI overrides it with `root`
+  because the GitHub checkout belongs to the runner's uid and a bind mount does not translate ownership.
 - **Quality gates**: `make lint` (PHP-CS-Fixer with the Basilicom ruleset, PHPStan level 6 over `src`, `tests`,
   `docker`) and `make test` (PHPUnit 11: `tests/Unit`, `tests/Functional`). CI runs both (`.github/workflows/ci.yml`).
 - **Pimcore quirks the helpers work around**: config-like models keep deleted entries in the runtime cache

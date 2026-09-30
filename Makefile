@@ -2,9 +2,12 @@
 SHELL := /bin/bash
 
 DOCKER_COMPOSE := docker compose
+# User inside the PHP container. www-data matches the image's PHP-FPM user; CI sets root because
+# the checkout on a GitHub runner belongs to another uid and a bind mount does not translate that.
+DOCKER_USER ?= www-data
 
 define run_in_workspace
-	$(DOCKER_COMPOSE) exec -T --user www-data php /bin/bash -c "cd /php && $(1)"
+	$(DOCKER_COMPOSE) exec -T --user $(DOCKER_USER) php /bin/bash -c "cd /php && $(1)"
 endef
 
 .PHONY: help
@@ -29,7 +32,7 @@ destroy: ## Remove containers and volumes
 
 .PHONY: shell
 shell: ## Open a shell in the PHP container
-	$(DOCKER_COMPOSE) exec --user www-data php /bin/bash
+	$(DOCKER_COMPOSE) exec --user $(DOCKER_USER) php /bin/bash
 
 .PHONY: composer-install
 composer-install: ## Install PHP dependencies (Pimcore included)
